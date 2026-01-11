@@ -6,9 +6,8 @@
 
 #include "rc.h"
 #include "imu.h"
-#include "motors.h"
 #include "pid.h"
-#include <math.h>
+#include "motors.h"
 
 #ifndef PI
 #define PI (3.1415927F)

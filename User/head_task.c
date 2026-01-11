@@ -3,10 +3,11 @@
 //
 
 #include "head_task.h"
+
 #include "rc.h"
 #include "imu.h"
-#include "motors.h"
 #include "pid.h"
+#include "motors.h"
 
 #ifndef PI
 #define PI (3.1415927f)
@@ -24,10 +25,14 @@ void Head_Task(void)
     int16_t shooter_current[2]={0,0};
     int16_t loader_current=0;
     if (rc.sw1 == SW_MID || rc.sw1 == SW_DOWN) {
-        RC_PITCH += rc_y_sensitivity * rc.RY;
-        if (RC_PITCH >= pitch_lookdown_lim){RC_PITCH = pitch_lookdown_lim;}
-        if (RC_PITCH <= pitch_lookup_lim){RC_PITCH = pitch_lookup_lim;}
-        pitch_voltage = Pitch6020_PID(RC_PITCH, Pitch6020_Angle, imu.Pitch_Velocity, 0);
+        if ( (Pitch6020_Angle >= pitch_lookdown_lim) && (rc.RY >= 0.0f) ) { //俯角超出限制
+            RC_PITCH = imu.Pitch_Angle;
+        }else if ( (Pitch6020_Angle <= pitch_lookup_lim) && (rc.RY <= 0.0f) ){ //仰角超出限制
+            RC_PITCH = imu.Pitch_Angle;
+        }else {
+            RC_PITCH += rc_y_sensitivity * rc.RY;
+        }
+        pitch_voltage = Pitch6020_PID(RC_PITCH, imu.Pitch_Angle, imu.Pitch_Velocity, 0);
 
         if (rc.wheel >= 0.3f) {
             SHOOT_ON = 1;

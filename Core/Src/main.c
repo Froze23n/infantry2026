@@ -125,7 +125,7 @@ int main(void)
   HAL_GPIO_WritePin(Blue_GPIO_Port, Blue_Pin, GPIO_PIN_RESET);
   while (1)
   {
-    HAL_IWDG_Refresh(&hiwdg); //这一行仅在调试时保留
+    // HAL_IWDG_Refresh(&hiwdg); //这一行仅在无遥控器调试时保留
     HAL_Delay(900);
     HAL_GPIO_TogglePin(Green_GPIO_Port,Green_Pin); //绿灯常闪
     /* USER CODE END WHILE */

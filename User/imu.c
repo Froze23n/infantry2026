@@ -383,6 +383,7 @@ void IMU_Task(void)
 	//Pitch
 	static float oldPitch = 0;
 	float newPitch = asinf(-2.0f * (q[1] * q[3] - q[0] * q[2]));
+	// imu.Pitch_Velocity = imu_raw_data.gy;
 	imu.Pitch_Velocity = (newPitch - oldPitch) * sampleFreq;
 	imu.Pitch_Angle = newPitch;
 	oldPitch = newPitch;

@@ -5,24 +5,24 @@
 #include "body_task.h"
 
 #include "rc.h"
-#include "motors.h"
-#include "pid.h"
 #include "arm_math.h"
+#include "pid.h"
+#include "motors.h"
 
 #ifndef PI
 #define PI (3.1415927F)
 #endif
 
 /*
-/1   2\
+/2   1\
    ^
-\4   3/
+\3   4/
 */
 
 const float Reduction_Ratio = 19.0f;
 const float _180_over_pi_ = 180.0f / PI;
-float chassis_speed_level = Reduction_Ratio*15;
-float chassis_rotate_level = Reduction_Ratio*3;
+float chassis_speed_level = Reduction_Ratio*10.0f;
+float chassis_rotate_level = Reduction_Ratio*5.0f;
 
 void Body_Task(void)
 {
@@ -45,6 +45,7 @@ void Body_Task(void)
          x = r * (cosa * cosY - sina * sinY);
          // float a = atan2f(y,x);// <vector>
          // arm_sin_cos_f32((a+Yaw6020_Angle)*_180_over_pi_, &y, &x);
+         // y*=r; x*=r;
       }
 
       if (SW_MID == rc.sw1) {

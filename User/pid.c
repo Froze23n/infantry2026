@@ -2,25 +2,21 @@
 // Created by YawFun on 25-12-7.
 //
 
-
-float EXP;
-float TRU;
-
 #include "pid.h"
 #ifndef PI
 #define PI (3.1415927F)
 #endif
 
 //'\0'表示不使用
-PID_T chasM = {45.0f , 2.0f , '\0'}; //底盘电机
+PID_T chasM = {45.0f , 2.0f ,                                              '\0'}; //底盘电机
 PID_T chasZ = {4.0f, '\0' ,20.0f}; //底盘旋转
 
-float GM6020_V2V = 1400;
-PID_T yawA = {20.0f, '\0' , 200.0f}; //yaw轴角度
+PID_T yawA = {23.0f, '\0' , 200.0f}; //yaw轴角度
 PID_T yawV = {6000.0f , 500.0f , '\0'}; //yaw轴速度
 
-PID_T pitchA = {20.0f , '\0' , 100.0f}; //pitch电机
-PID_T pitchV = {2000.0f , 600.0f , '\0'}; //pitch电机
+float GM6020_V2V = 700;
+PID_T pitchA = {80.0f , '\0' , 250.0f}; //pitch电机
+PID_T pitchV = {3000.0f , 500.0f , '\0'}; //pitch电机
 
 PID_T loadV = {25.0f , 0.5f , '\0'}; //拨弹盘
 PID_T shootV = {45.0f, 0.2f, '\0'}; //摩擦轮
@@ -97,7 +93,8 @@ float yaw6020_velocity_to_voltage(float expV, float truV)
     if(iError > YAW6020_V_I_LIMIT){iError = YAW6020_V_I_LIMIT;}
     if(iError <-YAW6020_V_I_LIMIT){iError =-YAW6020_V_I_LIMIT;}
     //计算加和
-    output = expV * GM6020_V2V + pError * yawV.kp + iError * yawV.ki;
+    #define YAW6020_V2V 1400.0f
+    output = expV * YAW6020_V2V + pError * yawV.kp + iError * yawV.ki;
     //限制理论电压上限+-25000mV
     if(output > +25000.0f){output = +25000.0f;}
     if(output < -25000.0f){output = -25000.0f;}
@@ -131,7 +128,7 @@ float pitch6020_velocity_to_voltage(float expV, float truV)
     float pError = expV - truV;
     float output;
     iError += pError;
-    #define PITCH6020_I_LIMIT (3.5f)
+    #define PITCH6020_I_LIMIT (0.3f)
     if(iError > PITCH6020_I_LIMIT){iError = PITCH6020_I_LIMIT;}
     if(iError <-PITCH6020_I_LIMIT){iError =-PITCH6020_I_LIMIT;}
     //计算加和
@@ -139,8 +136,6 @@ float pitch6020_velocity_to_voltage(float expV, float truV)
     //限制理论电压上限+-25000mV
     if(output > +25000.0f){output = +25000.0f;}
     if(output < -25000.0f){output = -25000.0f;}
-    EXP = expV;
-    TRU = truV;
     return output;
 }
 
