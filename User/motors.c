@@ -9,15 +9,15 @@
 #endif
 
 /**
-命令     类型    编号    反馈
-0x200	  M3508   1234  0x201-204
-0x200	  m2006   1234  0x201-204
+命令     类型     编号    反馈
+0x200	M3508   1234   0x201-204
+0x200	m2006   1234   0x201-204
 
-0x1FF   M3508   5678  0x205-208
-0x1FF   m2006   5678  0x205-208
+0x1FF   M3508   5678   0x205-208
+0x1FF   m2006   5678   0x205-208
 
-0x1FF   GM6020  1234  0x205-208
-0x2FF   GM6020  567   0x209,20A,20B
+0x1FF   GM6020  1234   0x205-208
+0x2FF   GM6020  567    0x209,20A,20B
 */
 
 /* ------------------------------ 常量 ------------------------------ */
@@ -76,9 +76,9 @@ void Enable_Motors(void)
     HAL_CAN_Start(&hcan2);
     HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING);  // CAN1 -> FIFO0
     HAL_CAN_ActivateNotification(&hcan2, CAN_IT_RX_FIFO1_MSG_PENDING);  // CAN2 -> FIFO1
-	HAL_TIM_Base_Start_IT(&htim4);//1ms 头
-    HAL_TIM_Base_Start_IT(&htim6);//1ms 脖
-    HAL_TIM_Base_Start_IT(&htim7);//1ms 身
+	HAL_TIM_Base_Start_IT(&htim4);//1ms 头 Pitch 拨弹盘 摩擦轮
+    HAL_TIM_Base_Start_IT(&htim6);//1ms 脖 Yaw
+    HAL_TIM_Base_Start_IT(&htim7);//1ms 身 底盘4个电机
 }
 
 /* ------------------------------------------ 发送函数：底盘和Yaw轴 ------------------------------------------ */
@@ -149,7 +149,7 @@ void Head_Motors_Tx(int16_t Pitch_Voltage, int16_t Shooter_Current[2], int16_t L
 static void CAN1_Rx_Handler(CAN_RxHeaderTypeDef RxHeader, uint8_t RxData[8]) {
 	if(RxHeader.StdId == 0x209){ //GM6020(id=5) #返回0x209
 		int16_t rawAngle = ( (RxData[0]<<8) | RxData[1] );
-		rawAngle -= 3418; //magic number
+		rawAngle -= 3418; //magic number 取决于Yaw轴GM6020的安装角度
 		if(rawAngle>=4096){rawAngle-=8192;}//-> (4095)~(0)~(-4096)
 		Yaw6020_Angle = (float)rawAngle * _pi_over_4096_; //-> [-pi,pi)
 	}else if(RxHeader.StdId>0x200 && RxHeader.StdId<0x205){ //4个m3508(1~4) #返回0x201-204

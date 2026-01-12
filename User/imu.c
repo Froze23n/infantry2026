@@ -365,6 +365,10 @@ static void MahonyAHRSupdate(float q[4], float gx, float gy, float gz, float ax,
 	q[3] *= recipNorm;
 }
 
+/*
+ * 严格以1000Hz频率执行此函数
+ * 任务包括读取IMU原始数据、解算云台Yaw与Pitch、PWM温度控制
+ */
 void IMU_Task(void)
 {
 	// IMU_Calibration(); //return;

@@ -14,7 +14,6 @@ PID_T chasZ = {4.0f, '\0' ,20.0f}; //底盘旋转
 PID_T yawA = {23.0f, '\0' , 200.0f}; //yaw轴角度
 PID_T yawV = {6000.0f , 500.0f , '\0'}; //yaw轴速度
 
-float GM6020_V2V = 700;
 PID_T pitchA = {80.0f , '\0' , 250.0f}; //pitch电机
 PID_T pitchV = {3000.0f , 500.0f , '\0'}; //pitch电机
 
@@ -22,7 +21,11 @@ PID_T loadV = {25.0f , 0.5f , '\0'}; //拨弹盘
 PID_T shootV = {45.0f, 0.2f, '\0'}; //摩擦轮
 
 
-
+/*
+ * 输入：电机编号，期望速度rad/s，实际速度rad/s
+ * 输出：电流±16384 (±20A)
+ * 用于麦克纳姆轮/全向轮 PI速度控制
+ */
 int16_t Chas3508_PID(int8_t ID, float expV, float truV)
 {
     static float iError[4] = {0,0,0,0};
@@ -43,9 +46,10 @@ int16_t Chas3508_PID(int8_t ID, float expV, float truV)
 }
 
 /*
-输入：[ -pi , pi )
-输出：车子旋转的角速度rad/s,限幅[-PI,PI]
-*/
+ *输入：云台YAW轴与底盘的角度之差 范围[ -pi , pi )
+ *输出：车子应该旋转的角速度rad/s
+ *用于底盘自动回正跟随云台。
+ */
 float Chas_Calc_Z(float relative_angle)
 {
     static float oldError = 0;
@@ -63,9 +67,9 @@ float Chas_Calc_Z(float relative_angle)
 }
 
 /*
-yaw轴电机-云台yaw角、角速度的双环PID
-期望角度 -> 期望速度 > 电压
-*/
+ *yaw轴双环PID
+ *角度 -> 速度 -> 电压
+ */
 int16_t Yaw6020_PID(float expA, float truA, float truV, float feed)
 {
     (void)feed;
@@ -102,8 +106,10 @@ float yaw6020_velocity_to_voltage(float expV, float truV)
 }
 
 
-
-
+/*
+ *pitch轴双环PID
+ *角度 -> 期望速度 -> 电压
+ */
 int16_t Pitch6020_PID(float expA, float truA, float truV, float feed)
 {
     //角度到速度：
@@ -132,14 +138,17 @@ float pitch6020_velocity_to_voltage(float expV, float truV)
     if(iError > PITCH6020_I_LIMIT){iError = PITCH6020_I_LIMIT;}
     if(iError <-PITCH6020_I_LIMIT){iError =-PITCH6020_I_LIMIT;}
     //计算加和
-    output = expV * GM6020_V2V + pError * pitchV.kp + iError * pitchV.ki;
+    #define PITCH6020_V2V 700.0f
+    output = expV * PITCH6020_V2V + pError * pitchV.kp + iError * pitchV.ki;
     //限制理论电压上限+-25000mV
     if(output > +25000.0f){output = +25000.0f;}
     if(output < -25000.0f){output = -25000.0f;}
     return output;
 }
 
-
+/*
+ * 拨弹盘速度控制
+ */
 int16_t Load2006_PID(float pError)
 {
     static float iError = 0;
@@ -154,7 +163,9 @@ int16_t Load2006_PID(float pError)
     return (int16_t)output;
 }
 
-
+/*
+ * 摩擦轮速度控制
+ */
 int16_t Shoot3508_PID(int8_t ID, float pError)
 {
     if((ID!=0) && (ID!=1)){return 0;}

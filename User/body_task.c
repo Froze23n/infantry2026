@@ -24,6 +24,9 @@ const float _180_over_pi_ = 180.0f / PI;
 float chassis_speed_level = Reduction_Ratio*10.0f;
 float chassis_rotate_level = Reduction_Ratio*5.0f;
 
+/*
+ * 以125Hz频率执行此函数（与底盘电机回传频率保持一致）
+ */
 void Body_Task(void)
 {
    float x=0,y=0,z=0;
@@ -34,7 +37,7 @@ void Body_Task(void)
       x = rc.LX;
       y = rc.LY;
       float r;
-      arm_sqrt_f32(x*x + y*y, &r); // |vector|
+      arm_sqrt_f32(x*x + y*y, &r); // |r|
 
       if (r > 0.0f) {
          float sina = y/r, cosa = x/r;
@@ -43,7 +46,7 @@ void Body_Task(void)
          if (r > 1.0f) {r = 1.0f;} //避免斜着走比直着走快
          y = r * (sina * cosY + cosa * sinY);
          x = r * (cosa * cosY - sina * sinY);
-         // float a = atan2f(y,x);// <vector>
+         // float a = atan2f(y,x);// <r>
          // arm_sin_cos_f32((a+Yaw6020_Angle)*_180_over_pi_, &y, &x);
          // y*=r; x*=r;
       }

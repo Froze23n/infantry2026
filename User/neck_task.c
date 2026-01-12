@@ -19,6 +19,10 @@ extern IMU_Type imu;
 
 const float rc_x_sensitivity = -PI/500.0f;
 
+/*
+ * 1000Hz执行此任务
+ * 云台Yaw轴控制
+ */
 void Neck_Task(void)
 {
     static float RC_YAW = 0;
