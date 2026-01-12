@@ -8,13 +8,13 @@
 #endif
 
 //'\0'表示不使用
-PID_T chasM = {45.0f , 2.0f ,                                              '\0'}; //底盘电机
+PID_T chasM = {45.0f , 2.0f , '\0'}; //底盘电机
 PID_T chasZ = {4.0f, '\0' ,20.0f}; //底盘旋转
 
-PID_T yawA = {23.0f, '\0' , 200.0f}; //yaw轴角度
+PID_T yawA = {25.0f, '\0' , 400.0f}; //yaw轴角度
 PID_T yawV = {6000.0f , 500.0f , '\0'}; //yaw轴速度
 
-PID_T pitchA = {80.0f , '\0' , 250.0f}; //pitch电机
+PID_T pitchA = {80.0f , '\0' , 500.0f}; //pitch电机
 PID_T pitchV = {3000.0f , 500.0f , '\0'}; //pitch电机
 
 PID_T loadV = {25.0f , 0.5f , '\0'}; //拨弹盘
@@ -75,13 +75,12 @@ int16_t Yaw6020_PID(float expA, float truA, float truV, float feed)
     (void)feed;
     //计算误差
     static float oldError = 0;
-    static float dError[2] = {0,0};
     float pError = expA - truA;
-    dError[1] = dError[0];dError[0] = pError - oldError;
+    float dError = pError - oldError;
     oldError = pError;
 
     //结合前馈，得到预期速度
-    float expV = pError * yawA.kp + (dError[0]+dError[1]) * yawA.kd;
+    float expV = pError * yawA.kp + dError * yawA.kd;
     //速度到电压
     float Voltage = yaw6020_velocity_to_voltage(expV, truV);
     return (int16_t)Voltage;
@@ -116,13 +115,12 @@ int16_t Pitch6020_PID(float expA, float truA, float truV, float feed)
     (void)feed;
     //计算误差
     static float oldError = 0;
-    static float dError[2] = {0,0};
     float pError = expA - truA;
-    dError[1] = dError[0];dError[0] = pError - oldError;
+    float dError = pError - oldError;
     oldError = pError;
 
     //结合前馈，得到预期速度
-    float expV = pError * pitchA.kp + (dError[0]+dError[1]) * pitchA.kd;
+    float expV = pError * pitchA.kp + dError * pitchA.kd;
     //速度到电压
     float Voltage = pitch6020_velocity_to_voltage(expV, truV);
     return (int16_t)Voltage;
