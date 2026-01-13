@@ -1,7 +1,9 @@
 .idea
 cmake-build-debug*
+Core
 Drivers
 Middlewares
+USB_DEVICE
 .cproject
 .mxproject
 .project
@@ -9,3 +11,7 @@ Middlewares
 *.jdebug.user
 STM32F407IGHX_FLASH.ld
 STM32F407IGHX_RAM.ld
+
+!Core/Src/main.c
+!Core/Src/stm32f4xx_it.c
+!USB_DEVICE/App/usbd_cdc_if.c
