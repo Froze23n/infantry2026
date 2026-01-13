@@ -258,16 +258,11 @@ static int8_t CDC_Control_FS(uint8_t cmd, uint8_t* pbuf, uint16_t length)
   * @param  Len: Number of data received (in bytes)
   * @retval Result of the operation: USBD_OK if all operations are OK else USBD_FAIL
   */
-float MID[32];
 static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 {
   /* USER CODE BEGIN 6 */
   USBD_CDC_SetRxBuffer(&hUsbDeviceFS, &Buf[0]);
   USBD_CDC_ReceivePacket(&hUsbDeviceFS);
-  if (*Len < 1024) {
-    memcpy((uint8_t*)MID, Buf, *Len);
-    CDC_Transmit_FS((uint8_t*)MID, *Len);
-  }
   return (USBD_OK);
   /* USER CODE END 6 */
 }

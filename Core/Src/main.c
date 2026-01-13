@@ -32,7 +32,7 @@
 #include "imu.h"
 #include "dbus.h"
 #include "motors.h"
-extern uint8_t CDC_Transmit_FS(uint8_t* Buf, uint16_t Len);
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
