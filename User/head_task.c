@@ -61,3 +61,49 @@ void Head_Task(void)
     }
     Head_Motors_Tx(pitch_voltage,shooter_current, loader_current);
 }
+
+// //测试
+// float loadV_kp = 100.0f;
+// float loadV_ki = 3.0f;
+// float iError = 0;
+// static int16_t Load3508_PID(float pError)
+// {
+//     // static float iError = 0;
+//     float output;
+//     iError += pError;
+//     #define IERROR_LIMIT (2000.0f)
+//     if(iError >  IERROR_LIMIT){ iError =  IERROR_LIMIT;}
+//     if(iError < -IERROR_LIMIT){ iError = -IERROR_LIMIT;}
+//     output = pError*loadV_kp + iError*loadV_ki;
+//     if(output > +16384){output = +16384;}
+//     if(output < -16384){output = -16384;}
+//     return (int16_t)output;
+// }
+//
+// float RC_LoadV=0;
+// void test_task(void) {
+//     int16_t loader_current=0;
+//     static int REVERSE = 0;
+//     if (rc.sw1 == SW_MID || rc.sw1 == SW_DOWN) {
+//         if (iError > IERROR_LIMIT - 1.0f) {
+//             REVERSE = 200;
+//         }
+//         if (REVERSE > 0) {
+//             REVERSE --;
+//             RC_LoadV = -15.0f;
+//         }else {
+//             if (rc.wheel >= 0.3f) {
+//                 RC_LoadV = rc.wheel * 15;
+//             }else if (rc.wheel <= -0.3f) {
+//                 RC_LoadV = -10.0f;
+//             }else {
+//                 RC_LoadV = 0;
+//             }
+//         }
+//         loader_current= Load3508_PID(RC_LoadV - Load2006_Velocity);
+//     }else {
+//
+//         loader_current = 0;
+//     }
+//     Head_Motors_Tx(0,0, loader_current);
+// }

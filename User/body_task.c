@@ -21,8 +21,8 @@
 
 const float Reduction_Ratio = 19.0f;
 const float _180_over_pi_ = 180.0f / PI;
-float chassis_speed_level = Reduction_Ratio*10.0f;
-float chassis_rotate_level = Reduction_Ratio*5.0f;
+float chassis_speed_level = Reduction_Ratio * 15.0f;
+float chassis_rotate_level = Reduction_Ratio * 5.0f;
 
 /*
  * 以125Hz频率执行此函数（与底盘电机回传频率保持一致）

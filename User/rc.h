@@ -13,7 +13,6 @@
 #define SW_DOWN     0x02
 
 /* ------------------------------ Type Definition ------------------------------ */
-#pragma pack(push, 1)
 typedef struct {
     float LY; //left, vertical
     float LX; //left, horizontal
@@ -55,7 +54,7 @@ typedef struct {
 
     float wheel;  //左上角拨轮
 } RC_Type;
-#pragma pack(pop)
+
 /* ------------------------------ Extern Global Variable ------------------------------ */
 extern RC_Type rc;
 
