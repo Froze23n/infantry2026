@@ -29,7 +29,6 @@ void Neck_Task(void)
         if (angle_diff < -PI) {RC_YAW += 2*PI;}
 
         voltage = Yaw6020_PID(RC_YAW, imu.Yaw_Angle, imu.Yaw_Velocity, 0);
-        // voltage = yaw6020_velocity_to_voltage(dbus.RX*(-5), imu.Yaw_Velocity);
     }
     else {
         RC_YAW = imu.Yaw_Angle;

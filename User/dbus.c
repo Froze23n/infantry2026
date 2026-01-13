@@ -37,7 +37,7 @@ void Dbus_Init()
 	SET_BIT(DBUS_HUART.Instance->CR3, USART_CR3_DMAR);  // 使能DMA串口接收
 
 	__HAL_DMA_DISABLE(DBUS_HDMA_RX);                // 失效DMA
-	while (DBUS_HDMA_RX.Instance->CR & DMA_SxCR_EN)  // 轮询是否已经失效
+	while (DBUS_HDMA_RX->Instance->CR & DMA_SxCR_EN)  // 轮询是否已经失效
 	{
 		__HAL_DMA_DISABLE(DBUS_HDMA_RX);
 	}
@@ -65,7 +65,7 @@ void Dbus_UART_IRQHandler(void)
 		__HAL_UART_CLEAR_PEFLAG(&DBUS_HUART);                    // 先读SR再读DR，清零空闲中断标志
 		if ((DBUS_HDMA_RX->Instance->CR & DMA_SxCR_CT) == RESET)  // 当前目标存储器为存储器0
 		{
-			__HAL_DMA_DISABLE(&DBUS_HDMA_RX);                // 失效DMA
+			__HAL_DMA_DISABLE(DBUS_HDMA_RX);                // 失效DMA
 			while (DBUS_HDMA_RX->Instance->CR & DMA_SxCR_EN)  // 轮询是否已经失效
 			{
 				__HAL_DMA_DISABLE(DBUS_HDMA_RX);

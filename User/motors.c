@@ -47,8 +47,9 @@ static void CAN2_Rx_Handler(CAN_RxHeaderTypeDef RxHeader, uint8_t RxData[8]);
 /* ------------------------------ 初始化（配置过滤器）------------------------------ */
 void Enable_Motors(void)
 {
+	//配置CAN1过滤器
     CAN_FilterTypeDef CAN_Filter;
-    CAN_Filter.FilterFIFOAssignment = CAN_FILTER_FIFO0;
+    CAN_Filter.FilterFIFOAssignment = CAN_FILTER_FIFO0; //CAN1使用FIFO0
     CAN_Filter.FilterScale = CAN_FILTERSCALE_32BIT;
     CAN_Filter.FilterBank = 0;
     CAN_Filter.FilterMode = CAN_FILTERMODE_IDMASK;
@@ -62,23 +63,31 @@ void Enable_Motors(void)
         HAL_GPIO_WritePin(Red_GPIO_Port,Red_Pin,GPIO_PIN_SET);//警告
         Error_Handler();
     }
-    CAN_Filter.FilterFIFOAssignment = CAN_FILTER_FIFO1;
+	//复用CAN_Filter, 配置CAN2过滤器
+	CAN_Filter.FilterFIFOAssignment = CAN_FILTER_FIFO1; //CAN2使用FIFO1
     CAN_Filter.FilterBank = 14;
     CAN_Filter.SlaveStartFilterBank = 14;
     if(HAL_CAN_ConfigFilter(&hcan2,&CAN_Filter)!= HAL_OK){
         HAL_GPIO_WritePin(Red_GPIO_Port,Red_Pin,GPIO_PIN_SET);//警告
         Error_Handler();
     }
+	//使能CAN总线
     HAL_CAN_Start(&hcan1);
     HAL_CAN_Start(&hcan2);
-    HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING);  // CAN1 -> FIFO0
-    HAL_CAN_ActivateNotification(&hcan2, CAN_IT_RX_FIFO1_MSG_PENDING);  // CAN2 -> FIFO1
+	//使能CAN接收缓冲区
+    HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING);  // 滑环下侧电机 -> CAN1 -> FIFO0
+    HAL_CAN_ActivateNotification(&hcan2, CAN_IT_RX_FIFO1_MSG_PENDING);  // 滑环上侧电机 -> CAN2 -> FIFO1
+	//使能CAN发送任务 在stm32f4xx_it.c
 	HAL_TIM_Base_Start_IT(&htim4);//1ms 头 Pitch 拨弹盘 摩擦轮
     HAL_TIM_Base_Start_IT(&htim6);//1ms 脖 Yaw
     HAL_TIM_Base_Start_IT(&htim7);//1ms 身 底盘4个电机
 }
 
 /* ------------------------------------------ 发送函数：底盘和Yaw轴 ------------------------------------------ */
+/*
+ * 此函数用于控制底盘四个轮子
+ * 轮子由M3508电机驱动 均挂在在CAN1
+ */
 void Body_M3508_Tx(int16_t Current[4])
 {
 	uint8_t TxData[8];
@@ -102,6 +111,10 @@ void Body_M3508_Tx(int16_t Current[4])
 	}
 }
 
+/*
+ * 此函数用于控制云台YAW轴
+ * 云台YAW轴由底盘上的GM6020电机驱动 因此挂载在CAN1
+ */
 void Neck_GM6020_Tx(int16_t Yaw_Voltage)
 {
 	uint8_t TxData[2];
@@ -119,6 +132,12 @@ void Neck_GM6020_Tx(int16_t Yaw_Voltage)
 	}
 }
 
+/*
+ * 此函数用于一次性控制滑环之上的四个电机
+ * 包括云台Pitch轴（GM6020）
+ * 供弹装置的拨弹盘（M2006）
+ * 发射机构的摩擦轮（两个去掉减速箱的M3508）
+ */
 void Head_Motors_Tx(int16_t Pitch_Voltage, int16_t Shooter_Current[2], int16_t Loader_Current) {
 	uint8_t TxData[8];
 	TxData[0] = (uint8_t)(Pitch_Voltage>>8);
@@ -143,6 +162,9 @@ void Head_Motors_Tx(int16_t Pitch_Voltage, int16_t Shooter_Current[2], int16_t L
 }
 
 /* ------------------------------------------ 接收函数 ------------------------------------------ */
+/*
+ * 处理CAN1总线上的报文数据
+ */
 static void CAN1_Rx_Handler(CAN_RxHeaderTypeDef RxHeader, uint8_t RxData[8]) {
 	if(RxHeader.StdId == 0x209){ //GM6020(id=5) #返回0x209
 		int16_t rawAngle = ( (RxData[0]<<8) | RxData[1] );
@@ -158,6 +180,9 @@ static void CAN1_Rx_Handler(CAN_RxHeaderTypeDef RxHeader, uint8_t RxData[8]) {
 	}
 }
 
+/*
+ * 处理CAN2的数据
+ */
 static void CAN2_Rx_Handler(CAN_RxHeaderTypeDef RxHeader, uint8_t RxData[8]) {
 	if (RxHeader.StdId == 0x205) {
 		int16_t rawAngle = ( (RxData[0]<<8) | RxData[1] );
@@ -176,6 +201,9 @@ static void CAN2_Rx_Handler(CAN_RxHeaderTypeDef RxHeader, uint8_t RxData[8]) {
 	}
 }
 
+/*
+ * 重定义FIFO0接收回调函数
+ */
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef* hcan)
 {
 	if (hcan == &hcan1)
@@ -194,6 +222,9 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef* hcan)
 	}
 }
 
+/*
+ * 重定义FIFO1接收回调函数
+ */
 void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef* hcan)
 {
 	if (hcan == &hcan2)
