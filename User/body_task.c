@@ -4,7 +4,7 @@
 
 #include "body_task.h"
 
-#include "rc.h"
+#include "dbus.h"
 #include "arm_math.h"
 #include "pid.h"
 #include "motors.h"
@@ -33,9 +33,9 @@ void Body_Task(void)
    float velocity[4]={0,0,0,0};
    int16_t current[4]={0,0,0,0};
 
-   if (SW_MID == rc.sw1 || SW_DOWN == rc.sw1) {
-      x = rc.LX;
-      y = rc.LY;
+   if (SW_MID == dbus.sw1 || SW_DOWN == dbus.sw1) {
+      x = dbus.LX;
+      y = dbus.LY;
       float r;
       arm_sqrt_f32(x*x + y*y, &r); // |r|
 
@@ -51,12 +51,12 @@ void Body_Task(void)
          // y*=r; x*=r;
       }
 
-      if (SW_MID == rc.sw1) {
+      if (SW_MID == dbus.sw1) {
          z = Chas_Calc_Z(Yaw6020_Angle);
       }else { //SW_DOWN == rc.sw1
-         if (SW_UP == rc.sw2) {
+         if (SW_UP == dbus.sw2) {
             z = 3.0f;
-         }else if (SW_DOWN == rc.sw2) {
+         }else if (SW_DOWN == dbus.sw2) {
             z = -3.0f;
          }else {
             z = 0;

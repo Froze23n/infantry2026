@@ -2,7 +2,7 @@
 // Created by YawFun on 25-12-7.
 //
 
-#include "rc.h"
+#include "dbus.h"
 #include "usart.h"
 #include "iwdg.h"
 
@@ -13,18 +13,18 @@
 #define DBUS_HUART_BASE USART3
 
 #define DBUS_RX_BUF_NUM 36  // 设置DMA接收数组长度为36字节，防止接收越界
-#define RC_FRAME_LENGTH 18  // 一帧遥控器数据为18字节
+#define DBUS_FRAME_LENGTH 18  // 一帧遥控器数据为18字节
 
-#define RC_RATIO 660.0f  // 摇杆数值CH归一化比例
-#define RC_OFFSET 1024   // 摇杆数值CH的偏移量
+#define DBUS_RATIO 660.0f  // 摇杆数值CH归一化比例
+#define DBUS_OFFSET 1024   // 摇杆数值CH的偏移量
 
 /* ------------------------------ Global Variable ------------------------------ */
-RC_Type rc;                             // 当前和上次键鼠、遥控器数据，上次数据更新为当前数据的周期为1ms
-uint32_t rc_tick;                       // 接收到数据的时刻
+DBUS_Type dbus;                             // 当前和上次键鼠、遥控器数据，上次数据更新为当前数据的周期为1ms
+uint32_t dbus_tick;                       // 接收到数据的时刻
 uint8_t DbusRxBuf[2][DBUS_RX_BUF_NUM];  // 接收到的原始数据
 
 /* ------------------------------ Function Declaration (only used in this .c file) ------------------------------ */
-static void Dbus_Data_Process(RC_Type *rc, uint8_t *buff);
+static void Dbus_Data_Process(DBUS_Type *dbus, uint8_t *buff);
 /* ------------------------------ Function Definition ------------------------------ */
 
 /**
@@ -81,9 +81,9 @@ void Dbus_UART_IRQHandler(void)
 
 			__HAL_DMA_ENABLE(&DBUS_HDMA_RX);  // 使能DMA
 
-			if (this_time_rx_len == RC_FRAME_LENGTH)  // 如果接收到的长度符合一帧遥控器数据长度，则进行处理
+			if (this_time_rx_len == DBUS_FRAME_LENGTH)  // 如果接收到的长度符合一帧遥控器数据长度，则进行处理
 			{
-				Dbus_Data_Process(&rc, DbusRxBuf[0]);
+				Dbus_Data_Process(&dbus, DbusRxBuf[0]);
 			}
 		} else {
 			__HAL_DMA_DISABLE(&DBUS_HDMA_RX);                // 失效DMA
@@ -98,9 +98,9 @@ void Dbus_UART_IRQHandler(void)
 
 			__HAL_DMA_ENABLE(&DBUS_HDMA_RX);  // 使能DMA
 
-			if (this_time_rx_len == RC_FRAME_LENGTH)  // 如果接收到的长度符合一帧遥控器数据长度，则进行处理
+			if (this_time_rx_len == DBUS_FRAME_LENGTH)  // 如果接收到的长度符合一帧遥控器数据长度，则进行处理
 			{
-				Dbus_Data_Process(&rc, DbusRxBuf[1]);
+				Dbus_Data_Process(&dbus, DbusRxBuf[1]);
 			}
 		}
 	}
@@ -108,12 +108,12 @@ void Dbus_UART_IRQHandler(void)
 
 /**
  * @brief   遥控器数据处理
- * @param   rc为保存处理后数据的结构体
+ * @param   dbus为保存处理后数据的结构体
  * @param	buff为接收到的原始数组首地址
  * @retval  none
  * @note
  **/
-static void Dbus_Data_Process(RC_Type *rc, uint8_t *buff)
+static void Dbus_Data_Process(DBUS_Type *dbus, uint8_t *buff)
 {
 	//接收到遥控器数据则喂狗，防止程序重启
 	HAL_IWDG_Refresh(&hiwdg);
@@ -124,24 +124,24 @@ static void Dbus_Data_Process(RC_Type *rc, uint8_t *buff)
 	int16_t ch3 = ((buff[2] >> 6) | (buff[3] << 2) | (buff[4] << 10)) & 0x07FF;
 	int16_t ch4 = ((buff[4] >> 1) | (buff[5] << 7)) & 0x07FF;
 	// 根据摇杆数据的偏置和比例解析出[-1, 1]之间的数值
-	ch1 -= RC_OFFSET; rc->RX = (float)ch1 / RC_RATIO;
-	ch2 -= RC_OFFSET; rc->RY = (float)ch2 / RC_RATIO;
-	ch3 -= RC_OFFSET; rc->LX = (float)ch3 / RC_RATIO;
-	ch4 -= RC_OFFSET; rc->LY = (float)ch4 / RC_RATIO;
+	ch1 -= DBUS_OFFSET; dbus->RX = (float)ch1 / DBUS_RATIO;
+	ch2 -= DBUS_OFFSET; dbus->RY = (float)ch2 / DBUS_RATIO;
+	ch3 -= DBUS_OFFSET; dbus->LX = (float)ch3 / DBUS_RATIO;
+	ch4 -= DBUS_OFFSET; dbus->LY = (float)ch4 / DBUS_RATIO;
 	// 得到三位开关数据
-	rc->sw1 = ((buff[5] >> 4) & 0x000C) >> 2;
-	rc->sw2 = (buff[5] >> 4) & 0x0003;
+	dbus->sw1 = ((buff[5] >> 4) & 0x000C) >> 2;
+	dbus->sw2 = (buff[5] >> 4) & 0x0003;
 
 	// 得到鼠标数据
-	rc->mouse.x = buff[6] | (buff[7] << 8);
-	rc->mouse.y = buff[8] | (buff[9] << 8);
-	rc->mouse.z = buff[10] | (buff[11] << 8);
-	rc->mouse.l = buff[12];
-	rc->mouse.r = buff[13];
+	dbus->mouse.x = buff[6] | (buff[7] << 8);
+	dbus->mouse.y = buff[8] | (buff[9] << 8);
+	dbus->mouse.z = buff[10] | (buff[11] << 8);
+	dbus->mouse.l = buff[12];
+	dbus->mouse.r = buff[13];
 
 	// 得到键盘数据
-	rc->kb.key_code = buff[14] | (buff[15] << 8);
+	dbus->kb.key_code = buff[14] | (buff[15] << 8);
 	// 拨轮数据解算
 	int16_t whl = buff[16] | (buff[17] << 8);//364~1024~1684
-	whl -= RC_OFFSET; rc->wheel = (float)whl / (RC_RATIO);
+	whl -= DBUS_OFFSET; dbus->wheel = (float)whl / (DBUS_RATIO);
 }

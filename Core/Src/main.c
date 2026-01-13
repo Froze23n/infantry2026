@@ -24,13 +24,15 @@
 #include "spi.h"
 #include "tim.h"
 #include "usart.h"
+#include "usb_device.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "imu.h"
-#include "rc.h"
+#include "dbus.h"
 #include "motors.h"
+extern uint8_t CDC_Transmit_FS(uint8_t* Buf, uint16_t Len);
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -105,6 +107,7 @@ int main(void)
   MX_CAN1_Init();
   MX_CAN2_Init();
   MX_USART6_UART_Init();
+  MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
@@ -128,6 +131,9 @@ int main(void)
   {
     // HAL_IWDG_Refresh(&hiwdg); //这一行仅在无遥控器调试时保留
     HAL_Delay(900);
+
+    // uint8_t * buf = "Hello There\r\n\0";
+    // CDC_Transmit_FS(buf, 14);
     HAL_GPIO_TogglePin(Green_GPIO_Port,Green_Pin); //绿灯常闪
     /* USER CODE END WHILE */
 

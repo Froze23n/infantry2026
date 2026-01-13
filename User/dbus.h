@@ -2,8 +2,8 @@
 // Created by YawFun on 25-12-7.
 //
 
-#ifndef RC_H
-#define RC_H
+#ifndef DBUS_H
+#define DBUS_H
 
 #include "main.h"
 
@@ -53,13 +53,13 @@ typedef struct {
     } kb;
 
     float wheel;  //左上角拨轮
-} RC_Type;
+} DBUS_Type;
 
 /* ------------------------------ Extern Global Variable ------------------------------ */
-extern RC_Type rc;
+extern DBUS_Type dbus;
 
 /* ------------------------------ Function Declaration (used in other .c files) ------------------------------ */
 void Dbus_Init(void); //放在main
 void Dbus_UART_IRQHandler(void); //放在中断处理函数中
 
-#endif //RC_H
+#endif //DBUS_H
