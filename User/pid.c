@@ -1,7 +1,3 @@
-//
-// Created by YawFun on 25-12-7.
-//
-
 #include "pid.h"
 #ifndef PI
 #define PI (3.1415927F)

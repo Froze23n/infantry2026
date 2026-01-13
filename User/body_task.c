@@ -1,7 +1,3 @@
-//
-// Created by YawFun on 25-12-7.
-//
-
 #include "body_task.h"
 
 #include "dbus.h"
@@ -46,9 +42,6 @@ void Body_Task(void)
          if (r > 1.0f) {r = 1.0f;} //避免斜着走比直着走快
          y = r * (sina * cosY + cosa * sinY);
          x = r * (cosa * cosY - sina * sinY);
-         // float a = atan2f(y,x);// <r>
-         // arm_sin_cos_f32((a+Yaw6020_Angle)*_180_over_pi_, &y, &x);
-         // y*=r; x*=r;
       }
 
       if (SW_MID == dbus.sw1) {
@@ -65,7 +58,7 @@ void Body_Task(void)
       //设置速度等级
       x *= chassis_speed_level;
       y *= chassis_speed_level;
-      z *= chassis_rotate_level/(1+r); //防止电机转速不够
+      z *= chassis_rotate_level/(1+r); //防止电机转速不够, 导致无法平移
       //速度分配
       velocity[0] = -z - y + x;
       velocity[1] = -z + y + x;

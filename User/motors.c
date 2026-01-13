@@ -1,6 +1,3 @@
-//
-// Created by YawFun on 25-12-7.
-//
 #include "motors.h"
 #include "can.h"
 #include "tim.h"

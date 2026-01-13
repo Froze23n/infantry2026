@@ -1,7 +1,3 @@
-//
-// Created by YawFun on 25-12-7.
-//
-
 #ifndef PID_H
 #define PID_H
 

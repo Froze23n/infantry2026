@@ -1,7 +1,3 @@
-//
-// Created by YawFun on 25-12-7.
-//
-
 #ifndef IMU_H
 #define IMU_H
 

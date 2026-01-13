@@ -1,7 +1,3 @@
-//
-// Created by YawFun on 25-12-7.
-//
-
 #ifndef NECK_TASK_H
 #define NECK_TASK_H
 

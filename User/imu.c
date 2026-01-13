@@ -1,8 +1,5 @@
-//
-// Created by YawFun on 25-12-7.
-//
-
 #include "imu.h"
+
 #include "spi.h"
 #include "tim.h"
 #include "math.h"

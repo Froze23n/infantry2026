@@ -1,16 +1,8 @@
-//
-// Created by YawFun on 25-12-7.
-//
-
 #ifndef MOTORS_H
 #define MOTORS_H
 
 #include "main.h"
 
-// struct MotorData_T {
-//     float Angle;     //累计角，弧度
-//     float Velocity;  //角速度，rad/s
-// };
 /*-----------------------externs-----------------------*/
 //can2数据：pitch电机&拨弹盘
 extern float Pitch6020_Angle;
