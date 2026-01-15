@@ -11,7 +11,7 @@ typedef struct
 } PID_T;
 
 int16_t Chas3508_PID(int8_t ID, float expV, float truV);
-float Chas_Calc_Z(float relative_angle);
+float Chas_Calc_Z(float pError);
 //底盘~云台yaw轴
 int16_t Yaw6020_PID(float expA, float truA, float truV, float feed);
 float yaw6020_velocity_to_voltage(float expV, float truV);
@@ -20,6 +20,7 @@ float yaw6020_velocity_to_voltage(float expV, float truV);
 int16_t Pitch6020_PID(float expA, float truA, float truV, float feed);
 float pitch6020_velocity_to_voltage(float expV, float truV);
 //云台拨弹盘,射击
+#define LOADER_IERROR_LIMIT (50000.0f) //堵转反转处理适合较大积分上限
 int16_t Load2006_PID(float pError);
 int16_t Shoot3508_PID(int8_t ID,float pError);
 

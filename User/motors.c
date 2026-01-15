@@ -26,14 +26,14 @@ const uint32_t NECK_CMD_ID = 0x2ff; //Yaw GM6020(id=5) #返回0x209
 const uint32_t BODY_CMD_ID = 0x200; //4个m3508(1~4) #返回0x201-204
 
 //进制转化
-const float _pi_over_4096_ = PI/4096.0f;
-const float _rads_per_rpm_ = 2*PI/60.0f;
+#define _pi_over_4096_ (PI/4096.0f)
+#define _rads_per_rpm_ (PI/30.0f)
 
 /* ------------------------------ 全局变量 ------------------------------ */
 //can1数据：pitch电机&拨弹盘
 float Pitch6020_Angle=0;
-const float pitch_lookup_lim = (700 - 1475)*_pi_over_4096_; //仰角
-const float pitch_lookdown_lim = (2000 - 1475)*_pi_over_4096_; //俯角
+const float pitch_lookup_lim = 700 * _pi_over_4096_; //仰角
+const float pitch_lookdown_lim = 2000 * _pi_over_4096_; //俯角
 float Load2006_Velocity=0;
 float Shoot3508_Velocity[2] = {0,0};
 //can2数据：yaw电机&麦轮
@@ -41,8 +41,8 @@ float Chas3508_Velocity[4] = {0,0,0,0};
 float Yaw6020_Angle = 0.0f;//(-pi,pi]
 
 /* ------------------------------ 函数 ------------------------------ */
-static void CAN1_Rx_Handler(CAN_RxHeaderTypeDef RxHeader, uint8_t RxData[8]);
-static void CAN2_Rx_Handler(CAN_RxHeaderTypeDef RxHeader, uint8_t RxData[8]);
+static void CAN1_Rx_Handler(CAN_RxHeaderTypeDef RxHeader, const uint8_t RxData[8]);
+static void CAN2_Rx_Handler(CAN_RxHeaderTypeDef RxHeader, const uint8_t RxData[8]);
 
 /* ------------------------------ 初始化（配置过滤器）------------------------------ */
 void Enable_Motors(void)
@@ -165,17 +165,22 @@ void Head_Motors_Tx(int16_t Pitch_Voltage, int16_t Shooter_Current[2], int16_t L
 /*
  * 处理CAN1总线上的报文数据
  */
-static void CAN1_Rx_Handler(CAN_RxHeaderTypeDef RxHeader, uint8_t RxData[8]) {
-	if(RxHeader.StdId == 0x209){ //GM6020(id=5) #返回0x209
-		int16_t rawAngle = ( (RxData[0]<<8) | RxData[1] );
+static void CAN1_Rx_Handler(CAN_RxHeaderTypeDef RxHeader, const uint8_t RxData[8]) {
+	if(RxHeader.StdId == 0x209) //GM6020(id=5) #返回0x209
+	{
+		int16_t rawAngle = (int16_t)( (RxData[0]<<8) | RxData[1] );
 		rawAngle -= 3418; //magic number 取决于Yaw轴GM6020的安装角度
 		if(rawAngle>=4096){rawAngle-=8192;}//-> (4095)~(0)~(-4096)
 		Yaw6020_Angle = (float)rawAngle * _pi_over_4096_; //-> [-pi,pi)
-	}else if(RxHeader.StdId>0x200 && RxHeader.StdId<0x205){ //4个m3508(1~4) #返回0x201-204
+	}
+	else if(RxHeader.StdId>0x200 && RxHeader.StdId<0x205) //4个m3508(1~4) #返回0x201-204
+	{
 		uint32_t i = RxHeader.StdId-(uint32_t)0x201;
-		int16_t rawVelocity = ( (RxData[2]<<8) | RxData[3] );
+		int16_t rawVelocity = (int16_t)( (RxData[2]<<8) | RxData[3] );
 		Chas3508_Velocity[i] = (float)rawVelocity * _rads_per_rpm_;
-	}else{
+	}
+	else
+	{
 		HAL_GPIO_WritePin(Red_GPIO_Port,Red_Pin,GPIO_PIN_SET);
 	}
 }
@@ -183,20 +188,29 @@ static void CAN1_Rx_Handler(CAN_RxHeaderTypeDef RxHeader, uint8_t RxData[8]) {
 /*
  * 处理CAN2的数据
  */
-static void CAN2_Rx_Handler(CAN_RxHeaderTypeDef RxHeader, uint8_t RxData[8]) {
-	if (RxHeader.StdId == 0x205) {
-		int16_t rawAngle = ( (RxData[0]<<8) | RxData[1] );
-		Pitch6020_Angle = (rawAngle - 1475) * _pi_over_4096_;
-	}else if (RxHeader.StdId == 0x206) {
-		int16_t rawVelocity = ( (RxData[2]<<8) | RxData[3] );
-		Shoot3508_Velocity[0] = rawVelocity * _rads_per_rpm_;
-	}else if (RxHeader.StdId == 0x207) {
-		int16_t rawVelocity = ( (RxData[2]<<8) | RxData[3] );
-		Shoot3508_Velocity[1] = rawVelocity * _rads_per_rpm_;
-	}else if (RxHeader.StdId == 0x208) {
-		int16_t rawVelocity = ( (RxData[2]<<8) | RxData[3] );
-		Load2006_Velocity = rawVelocity * _rads_per_rpm_;
-	}else{
+static void CAN2_Rx_Handler(CAN_RxHeaderTypeDef RxHeader, const uint8_t RxData[8]) {
+	if (RxHeader.StdId == 0x205)
+	{
+		int16_t rawAngle = (int16_t)( (RxData[0]<<8) | RxData[1] );
+		Pitch6020_Angle = (float)rawAngle * _pi_over_4096_;
+	}
+	else if (RxHeader.StdId == 0x206)
+	{
+		int16_t rawVelocity = (int16_t)( (RxData[2]<<8) | RxData[3] );
+		Shoot3508_Velocity[0] = (float)rawVelocity * _rads_per_rpm_;
+	}
+	else if (RxHeader.StdId == 0x207)
+	{
+		int16_t rawVelocity = (int16_t)( (RxData[2]<<8) | RxData[3] );
+		Shoot3508_Velocity[1] = (float)rawVelocity * _rads_per_rpm_;
+	}
+	else if (RxHeader.StdId == 0x208)
+	{
+		int16_t rawVelocity = (int16_t)( (RxData[2]<<8) | RxData[3] );
+		Load2006_Velocity = (float)rawVelocity * _rads_per_rpm_;
+	}
+	else
+	{
 		HAL_GPIO_WritePin(Red_GPIO_Port,Red_Pin,GPIO_PIN_SET);
 	}
 }

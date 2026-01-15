@@ -3,7 +3,7 @@
 
 #include "main.h"
 
-/*-----------------------externs-----------------------*/
+/*-----------------------extern-----------------------*/
 //can2数据：pitch电机&拨弹盘
 extern float Pitch6020_Angle;
 extern const float pitch_lookup_lim;

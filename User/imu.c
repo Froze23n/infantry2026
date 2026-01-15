@@ -9,8 +9,8 @@
 #endif
 
 //经验误差&常量定义
-const float YAW_GYRO_COMPENSATION = -0.14;
-const float _pi_over_180_ = PI/180.0f;
+const float YAW_GYRO_COMPENSATION = -0.14f;
+#define _pi_over_180_ (PI/180.0f)
 
 //变量
 static imu_raw_data_t imu_raw_data = {0,0,0,0,0,0,0};
@@ -21,13 +21,13 @@ static void IMU_Get_Data(void);
 static float invSqrt(float x);
 static void MahonyAHRSupdate(float q[4], float gx, float gy, float gz, float ax, float ay, float az);
 //陀螺仪
-static void BMI088_Write_Gyro_Single_Reg(uint8_t const reg, uint8_t const data);
-static uint8_t BMI088_Read_Gyro_Single_Reg(uint8_t const reg);
+static void BMI088_Write_Gyro_Single_Reg(uint8_t reg, uint8_t data);
+static uint8_t BMI088_Read_Gyro_Single_Reg(uint8_t reg);
 static void BMI088_Read_Gyro_Multi_Reg(uint8_t *bmi_rx_data);
 static uint8_t BMI088_Gyro_Init(void);
 //加速度计
-static void BMI088_Write_Acc_Single_Reg(uint8_t const reg, uint8_t const data);
-static uint8_t BMI088_Read_Acc_Single_Reg(uint8_t const reg);
+static void BMI088_Write_Acc_Single_Reg(uint8_t reg, uint8_t data);
+static uint8_t BMI088_Read_Acc_Single_Reg(uint8_t reg);
 static void BMI088_Read_Acc_Multi_Reg(uint8_t *bmi_rx_data);
 static uint8_t BMI088_Acc_Init(void);
 //微秒延时
@@ -78,7 +78,7 @@ static void IMU_Get_Data(void)
 	imu_raw_data.temperature = BMI088_Read_Temperature();
 }
 
-static void BMI088_Write_Gyro_Single_Reg(uint8_t const reg, uint8_t const data)
+static void BMI088_Write_Gyro_Single_Reg(const uint8_t reg, const uint8_t data)
 {
 	uint8_t bmi_rx_byte, bmi_tx_byte;
 	//开始
@@ -92,7 +92,7 @@ static void BMI088_Write_Gyro_Single_Reg(uint8_t const reg, uint8_t const data)
 	HAL_GPIO_WritePin(CS1_GYRO_GPIO_Port, CS1_GYRO_Pin, GPIO_PIN_SET);  // 拉高片选信号，结束传输 NSS_High
 }
 
-static uint8_t BMI088_Read_Gyro_Single_Reg(uint8_t const reg)
+static uint8_t BMI088_Read_Gyro_Single_Reg(const uint8_t reg)
 {
 	uint8_t bmi_rx_byte, bmi_tx_byte;
 	//开始
@@ -149,7 +149,7 @@ static uint8_t BMI088_Gyro_Init(void)
 	return BMI088_NO_ERROR;
 }
 
-static void BMI088_Write_Acc_Single_Reg(uint8_t const reg, uint8_t const data)
+static void BMI088_Write_Acc_Single_Reg(const uint8_t reg, const uint8_t data)
 {
 	uint8_t bmi_rx_byte, bmi_tx_byte;
 	//开始
@@ -163,7 +163,7 @@ static void BMI088_Write_Acc_Single_Reg(uint8_t const reg, uint8_t const data)
 	HAL_GPIO_WritePin(CS1_ACCEL_GPIO_Port, CS1_ACCEL_Pin, GPIO_PIN_SET);  // 拉高片选信号，结束传输
 }
 
-static uint8_t BMI088_Read_Acc_Single_Reg(uint8_t const reg)
+static uint8_t BMI088_Read_Acc_Single_Reg(const uint8_t reg)
 {
 	uint8_t bmi_rx_byte, bmi_tx_byte;
 	//开始
@@ -346,6 +346,8 @@ static void MahonyAHRSupdate(float q[4], float gx, float gy, float gz, float ax,
 	gx *= (0.5f * (1.0f / sampleFreq));  // pre-multiply common factors
 	gy *= (0.5f * (1.0f / sampleFreq));
 	gz *= (0.5f * (1.0f / sampleFreq));
+
+	// Avoid
 	qa = q[0];
 	qb = q[1];
 	qc = q[2];
@@ -393,8 +395,8 @@ void IMU_Task(void)
 	static float oldYaw = 0;
 	float newYaw = atan2f(2.0f * (q[0] * q[3] + q[1] * q[2]), 2.0f * (q[0] * q[0] + q[1] * q[1]) - 1.0f);
 	float diffYaw = newYaw - oldYaw;
-	if(diffYaw<-PI){diffYaw+=2*PI;} // Circle+=1;
-	if(diffYaw>+PI){diffYaw-=2*PI;} // Circle-=1;
+	if(diffYaw < -PI){ diffYaw += 2 * PI; } // Circle+=1;
+	if(diffYaw > +PI){ diffYaw -= 2 * PI; } // Circle-=1;
 	//累计的弧度广播到全局
 	imu.Yaw_Velocity = diffYaw * sampleFreq;
 	imu.Yaw_Angle += diffYaw; //imu.Yaw_Angle = newYaw + 2.0f * PI * Circle;
