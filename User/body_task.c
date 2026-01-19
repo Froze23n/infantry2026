@@ -59,7 +59,7 @@ void Body_Task(void)
       //设置速度等级
       x *= chassis_speed_level;
       y *= chassis_speed_level;
-      z *= chassis_rotate_level/(1+r); //防止电机转速不够, 导致告诉旋转时无法平移
+      z *= chassis_rotate_level/(1.0f+r); //防止电机转速不够, 导致告诉旋转时无法平移
 
       //速度分配
       float velocity[4];
