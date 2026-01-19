@@ -2,7 +2,6 @@
 cmake-build-debug*
 Drivers
 Middlewares
-USB_DEVICE
 .cproject
 .mxproject
 .project
@@ -11,9 +10,15 @@ USB_DEVICE
 STM32F407IGHX_FLASH.ld
 STM32F407IGHX_RAM.ld
 
-Core/Src/*.c
-Core/Src/
+Core/Src/*
 !Core/Src/main.c
 !Core/Src/stm32f4xx_it.c
 Core/Inc
 Core/Startup
+
+USB_DEVICE/APP/*
+!USB_DEVICE/APP/usbd_cdc_if.c
+USB_DEVICE/Target
+
+User/referee.*
+User/usb.*
