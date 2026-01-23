@@ -31,7 +31,7 @@ const uint32_t BODY_CMD_ID = 0x200; //4个m3508(1~4) #返回0x201-204
 
 /* ------------------------------ 全局变量 ------------------------------ */
 //can1数据：pitch电机&拨弹盘
-float Pitch6020_Angle=0;
+float Pitch6020_Angle=1400 * _pi_over_4096_;
 const float pitch_lookup_lim = 700 * _pi_over_4096_; //仰角
 const float pitch_lookdown_lim = 2000 * _pi_over_4096_; //俯角
 float Load2006_Velocity=0;

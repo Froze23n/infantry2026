@@ -114,21 +114,25 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  //开启蜂鸣器
+  HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_3);
+  __HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_3, 500);
   //初始化遥控器, IMU, CAN
   Dbus_Init();
   IMU_Init();
-  Enable_Motors();
-  //蜂鸣器响0.1s
-  HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_3);
-  __HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_3, 500);
-  HAL_Delay(100);
+  //关闭蜂鸣器
   __HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_3, 0);
   //关闭RGB
   HAL_GPIO_WritePin(Red_GPIO_Port, Red_Pin, GPIO_PIN_RESET);
   HAL_GPIO_WritePin(Green_GPIO_Port, Green_Pin, GPIO_PIN_RESET);
   HAL_GPIO_WritePin(Blue_GPIO_Port, Blue_Pin, GPIO_PIN_RESET);
+  //等待看门狗生效
+  HAL_Delay(1000);
+  Enable_Motors();
   while (1)
   {
+    extern void USB_Tx(void);
+    USB_Tx();
     HAL_Delay(900);
     HAL_GPIO_TogglePin(Green_GPIO_Port,Green_Pin); //绿灯常闪
     /* USER CODE END WHILE */
