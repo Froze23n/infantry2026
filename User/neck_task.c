@@ -10,7 +10,7 @@
 #endif
 
 //遥控数据
-const float rc_x_sensitivity = -PI/500.0f;
+const float rc_x_sensitivity = PI/500.0f;
 
 /*
  * 1000Hz执行此任务
@@ -24,7 +24,7 @@ void Neck_Task(void)
     if (SW_MID == dbus.sw1 || SW_DOWN == dbus.sw1) {
         float angle_diff = RC_YAW - imu.Yaw_Angle;
 
-        if (angle_diff > -PI/2 && angle_diff < PI/2) { RC_YAW += rc_x_sensitivity * dbus.RX; }
+        if (angle_diff > -PI/2 && angle_diff < PI/2) { RC_YAW -= rc_x_sensitivity * dbus.RX; } //注意方向
         if (angle_diff > +PI) { RC_YAW -= 2*PI; }
         if (angle_diff < -PI) { RC_YAW += 2*PI; }
 

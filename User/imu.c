@@ -373,7 +373,7 @@ void IMU_Task(void)
 	// IMU_Calibration(); //return;
 	static float q[4]={1.0f , 0.0f , 0.0f , 0.0f};  // 四元数
 	IMU_Get_Data();
-	/* 由于板子是躺着放的，所以必须对部分数据取反 */
+	/* 如果板子是倒着放的，就需要对部分数据取反 */
 	MahonyAHRSupdate(q,
 		imu_raw_data.gx,
 		imu_raw_data.gy,

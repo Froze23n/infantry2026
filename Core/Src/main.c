@@ -108,6 +108,7 @@ int main(void)
   MX_CAN2_Init();
   MX_USART6_UART_Init();
   MX_USB_DEVICE_Init();
+  MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
@@ -131,8 +132,6 @@ int main(void)
   Enable_Motors();
   while (1)
   {
-    extern void USB_Tx(void);
-    USB_Tx();
     HAL_Delay(900);
     HAL_GPIO_TogglePin(Green_GPIO_Port,Green_Pin); //绿灯常闪
     /* USER CODE END WHILE */
