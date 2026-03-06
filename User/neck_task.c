@@ -5,10 +5,6 @@
 #include "pid.h"
 #include "motors.h"
 
-#ifndef PI
-#define PI (3.1415927F)
-#endif
-
 //遥控数据
 const float rc_x_sensitivity = PI/500.0f;
 

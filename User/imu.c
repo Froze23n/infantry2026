@@ -4,10 +4,6 @@
 #include "tim.h"
 #include "math.h"
 
-#ifndef PI
-#define PI (3.1415927F)
-#endif
-
 //经验误差&常量定义
 const float YAW_GYRO_COMPENSATION = -0.14f;
 #define _pi_over_180_ (PI/180.0f)

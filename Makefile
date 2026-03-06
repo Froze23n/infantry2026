@@ -226,8 +226,16 @@ $(BUILD_DIR):
 #######################################
 # clean up
 #######################################
+# clean:
+# 	-rm -fR $(BUILD_DIR)
 clean:
-	-rm -fR $(BUILD_DIR)
+	@if exist $(BUILD_DIR) ( \
+		echo [INFO] Cleaning '$(BUILD_DIR)'... && \
+		rmdir /s /q $(BUILD_DIR) && \
+		echo [INFO] Done. \
+	) else ( \
+		echo [INFO] Build directory '$(BUILD_DIR)' not found, nothing to clean. \
+	)
   
 #######################################
 # dependencies

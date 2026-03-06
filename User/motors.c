@@ -1,9 +1,6 @@
 #include "motors.h"
 #include "can.h"
 #include "tim.h"
-#ifndef PI
-#define PI (3.1415927F)
-#endif
 
 /**
 命令     类型     编号    反馈

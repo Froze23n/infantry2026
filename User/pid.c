@@ -1,7 +1,4 @@
 #include "pid.h"
-#ifndef PI
-#define PI (3.1415927F)
-#endif
 
 //'\0'表示不使用
 PID_T chasM = {45.0f , 2.0f , '\0'}; //底盘电机

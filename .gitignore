@@ -7,7 +7,8 @@ build
 Core/Src/*
 !Core/Src/main.c
 !Core/Src/stm32f4xx_it.c
-Core/Inc
+Core/Inc/*
+!Core/Inc/main.h
 Core/Startup
 
 Drivers

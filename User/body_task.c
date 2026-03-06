@@ -5,10 +5,6 @@
 #include "pid.h"
 #include "motors.h"
 
-#ifndef PI
-#define PI (3.1415927F)
-#endif
-
 #define _180_over_pi_ (180.0f / PI)
 
 /*

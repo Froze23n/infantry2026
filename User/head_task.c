@@ -5,10 +5,6 @@
 #include "pid.h"
 #include "motors.h"
 
-#ifndef PI
-#define PI (3.1415927f)
-#endif
-
 const float rc_y_sensitivity = 1/200.0f;
 const float loader_speed_level = 250.0f;
 
