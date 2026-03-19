@@ -1,5 +1,6 @@
 #include "referee.h"
 #include "usart.h"
+#include <string.h>
 
 //裁判系统常规链路
 /* ------------------------------ 宏定义 变量 内部函数声明 ------------------------------ */
@@ -14,8 +15,8 @@ static uint8_t rxbuffer[2][MAX_RX_SIZE];
 
 struct
 {
-    unsigned a,b,c,d,e,f,g,h,i,j;
-} error;
+    unsigned a,b,c,d,e;
+} referee_error;
 unsigned npack=0;
 
 
@@ -39,7 +40,6 @@ void Referee_Init(void)
     SET_BIT(REFE_HDMA_RX->Instance->CR, DMA_SxCR_DBM); //使能双缓冲区
     __HAL_DMA_ENABLE(REFE_HDMA_RX); //启动！
 }
-
 
 void Referee_UART_IRQHandler(void)
 {
@@ -71,32 +71,51 @@ void Referee_UART_IRQHandler(void)
     }
 }
 
-uint8_t debug = 0;
-
 static void Refe_Data_Process(uint8_t* buffer, int32_t total_length)
 {
     while(total_length!=0)
     {
         npack++;
-        if(total_length<0){error.a++; return;} //最后一个数据包残缺
+        if(total_length<0){referee_error.a++; return;} //最后一个数据包残缺
 
-        if(SOF!=buffer[0]){error.b++; return;} //起始字节错误
+        if(SOF!=buffer[0]){referee_error.b++; return;} //起始字节错误
         
         uint16_t data_length = buffer[1] | buffer[2]<<8; //数据段长度
-        uint8_t seq = buffer[3]; //包序列
-        debug = seq;
+        
+        static uint8_t seq = 0xff;
+        if(buffer[3] != seq + 1){
+            referee_error.c++;
+        } //包序列错误
+        seq = buffer[3]; //更新包序列
+        
         uint8_t CRC8 = buffer[4]; //帧头CRC8校验
-
-        if(CRC8!=Get_CRC8_Check_Sum(buffer,4)){error.c++; return;} //CRC8校验错误
+        if(CRC8!=Get_CRC8_Check_Sum(buffer,4)){referee_error.d++; return;} //CRC8校验错误
 
         uint16_t cmd_id = buffer[5] | buffer[6]<<8;
         uint8_t *data = buffer + 7; //5(帧头)+2(cmd_id)
         uint16_t CRC16 = data[data_length] | (data[data_length+1]<<8); //数据段后2字节为CRC16校验
 
-        if(CRC16!=Get_CRC16_Check_Sum(buffer, data_length + 7)){error.d++; return;} //CRC16校验错误
+        if(CRC16!=Get_CRC16_Check_Sum(buffer, data_length + 7)){referee_error.e++; return;} //CRC16校验错误
         
         switch (cmd_id) {
-            //数据更新
+            case ID_game_status: memcpy(&referee.game_status, data, sizeof(game_status_t)); break;
+            case ID_game_result: memcpy(&referee.game_result, data, sizeof(game_result_t)); break;
+            case ID_game_robot_HP: memcpy(&referee.game_robot_hp, data, sizeof(game_robot_HP_t)); break;
+
+            case ID_event_data: memcpy(&referee.event_data, data, sizeof(event_data_t)); break;
+            case ID_referee_warning: memcpy(&referee.referee_warning, data, sizeof(referee_warning_t)); break;
+            case ID_dart_info: memcpy(&referee.dart_info, data, sizeof(dart_info_t)); break;
+
+            case ID_robot_status: memcpy(&referee.robot_status, data, sizeof(robot_status_t)); break;
+            case ID_power_heat_data: memcpy(&referee.power_heat_data, data, sizeof(power_heat_data_t)); break;
+            case ID_robot_pos: memcpy(&referee.robot_pos, data, sizeof(robot_pos_t)); break;
+            case ID_buff: memcpy(&referee.buff, data, sizeof(buff_t)); break;
+            case ID_hurt_data: memcpy(&referee.hurt_data, data, sizeof(hurt_data_t)); break;
+            case ID_shoot_data: memcpy(&referee.shoot_data, data, sizeof(shoot_data_t)); break;
+            case ID_projectile_allowance: memcpy(&referee.projectile_allowance, data, sizeof(projectile_allowance_t)); break;
+            case ID_rfid_status: memcpy(&referee.rfid_status, data, sizeof(rfid_status_t)); break;
+
+            case ID_robot_interaction_data: memcpy(&referee.robot_interaction_data, data, sizeof(robot_interaction_data_t)); break;
             default: break;
         }
 
