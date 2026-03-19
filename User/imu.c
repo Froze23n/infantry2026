@@ -4,9 +4,8 @@
 #include "tim.h"
 #include "math.h"
 
-//经验误差&常量定义
+//经验误差
 const float YAW_GYRO_COMPENSATION = -0.14f;
-#define _pi_over_180_ (PI/180.0f)
 
 //变量
 static imu_raw_data_t imu_raw_data = {0,0,0,0,0,0,0};
@@ -405,6 +404,3 @@ void IMU_Task(void)
 		__HAL_TIM_SET_COMPARE(&htim10, TIM_CHANNEL_1, 0);
 	}
 }
-
-
-

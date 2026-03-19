@@ -164,4 +164,3 @@ int16_t Shoot3508_PID(int8_t ID, float pError)
     if(output < -16384){ output = -16384; } /* -20000mV  电流  +20000mV*/
     return (int16_t)output;
 }
-

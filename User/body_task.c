@@ -5,8 +5,6 @@
 #include "pid.h"
 #include "motors.h"
 
-#define _180_over_pi_ (180.0f / PI)
-
 /*
 /2   1\
    ^

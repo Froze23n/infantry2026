@@ -65,9 +65,12 @@ void Error_Handler(void);
 #define Blue_GPIO_Port GPIOH
 
 /* USER CODE BEGIN Private defines */
-#ifndef PI
+//圆周率
 #define PI (3.1415927F)
-#endif
+//角度-弧度 转换
+#define _180_over_pi_ (180.0f / PI)
+#define _pi_over_180_ (PI/180.0f)
+
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus
