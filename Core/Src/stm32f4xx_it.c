@@ -7,6 +7,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "dbus.h"
+#include "referee.h"
 #include "imu.h"
 #include "head_task.h"
 #include "neck_task.h"
@@ -374,7 +375,7 @@ void USART6_IRQHandler(void)
   /* USER CODE END USART6_IRQn 0 */
   HAL_UART_IRQHandler(&huart6);
   /* USER CODE BEGIN USART6_IRQn 1 */
-
+  Referee_UART_IRQHandler();
   /* USER CODE END USART6_IRQn 1 */
 }
 

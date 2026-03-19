@@ -31,6 +31,7 @@
 /* USER CODE BEGIN Includes */
 #include "imu.h"
 #include "dbus.h"
+#include "referee.h"
 #include "motors.h"
 
 /* USER CODE END Includes */
@@ -120,6 +121,7 @@ int main(void)
   __HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_3, 500);
   //初始化遥控器, IMU, CAN
   Dbus_Init();
+  Referee_Init();
   IMU_Init();
   //关闭蜂鸣器
   __HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_3, 0);
