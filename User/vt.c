@@ -10,9 +10,12 @@
 #define VT_HUART_BASE USART1      //串口外设基地址
 #define VT_RX_BUF_SIZE 64        //最大接收长度
 #define VT_RC_LEN 21 //遥控器数据长度
+#define VT_CH_OFFSET 1024
+#define VT_CH_RATIO 660.0f
 
-VT_Type vt;
+VT_Host_Type vt;
 static uint8_t VT_RxBuf[2][VT_RX_BUF_SIZE];  // 接收到的原始数据
+
 struct
 {
     unsigned a,b,c,d,e,f;
@@ -74,9 +77,6 @@ void VT_IRQHandler(void)
 }
 
 static void VT_Data_Process(uint8_t* buffer, int32_t length){
-	//接收到遥控器数据则喂狗，防止程序重启
-	HAL_IWDG_Refresh(&hiwdg);
-	
 	if(length > VT_RX_BUF_SIZE){vt_error.f++;} //数据长度过大
     
     while(length!=0)
@@ -87,7 +87,30 @@ static void VT_Data_Process(uint8_t* buffer, int32_t length){
 		if(buffer[0] == 0xA9 && buffer[1] == 0x53){
 			uint16_t crc16 = get_crc16_check_sum(buffer, VT_RC_LEN - 2);
 			if(crc16 == (buffer[VT_RC_LEN - 2] | (buffer[VT_RC_LEN - 1] << 8))){ //CRC16校验
-				memcpy(&vt, buffer, sizeof(VT_Type)); //数据处理
+	            HAL_IWDG_Refresh(&hiwdg); //成功接收到遥控器数据，喂狗防止程序重启
+				
+                VT_Wire_Type *vt_wire = (VT_Wire_Type *)buffer;
+                
+                vt.LX = (vt_wire->rc.bit.ch_3 - VT_CH_OFFSET) / VT_CH_RATIO;
+                vt.LY = (vt_wire->rc.bit.ch_2 - VT_CH_OFFSET) / VT_CH_RATIO;
+                vt.RX = (vt_wire->rc.bit.ch_0 - VT_CH_OFFSET) / VT_CH_RATIO;
+                vt.RY = (vt_wire->rc.bit.ch_1 - VT_CH_OFFSET) / VT_CH_RATIO;
+                vt.wheel = (vt_wire->rc.bit.wheel - VT_CH_OFFSET) / VT_CH_RATIO;
+                
+                vt.CNS = vt_wire->rc.bit.mode_sw;
+                vt.pause = vt_wire->rc.bit.pause;
+                vt.FN_L = vt_wire->rc.bit.fn_1;
+                vt.FN_R = vt_wire->rc.bit.fn_2;
+                vt.trigger = vt_wire->rc.bit.trigger;
+                
+                vt.mouse_x = vt_wire->mouse.bit.mouse_x;
+                vt.mouse_y = vt_wire->mouse.bit.mouse_y;
+                vt.mouse_z = vt_wire->mouse.bit.mouse_z;
+                vt.mouse_left = vt_wire->mouse.bit.mouse_left;
+                vt.mouse_right = vt_wire->mouse.bit.mouse_right;
+                vt.mouse_middle = vt_wire->mouse.bit.mouse_middle;
+
+                vt.keyboard.raw = vt_wire->keyboard.raw;
 			}else{
 				vt_error.b++; //CRC16校验失败
 			}

@@ -1,6 +1,5 @@
 #include "head_task.h"
-
-#include "dbus.h"
+#include "vt.h"
 #include "imu.h"
 #include "pid.h"
 #include "motors.h"
@@ -22,13 +21,13 @@ void Head_Task(void)
     int16_t shooter_current[2]={0,0}; //摩擦轮控制电流
     static int16_t loader_current=0; //拨弹盘控制电流
 
-    if (dbus.sw1 == SW_MID || dbus.sw1 == SW_DOWN) {
-        if ( (Pitch6020_Angle >= pitch_lookdown_lim) && (dbus.RY >= 0.0f) ) { //俯角超出限制 (下俯为电机正方向)
+    if (vt.CNS != MODE_C) {
+        if ( (Pitch6020_Angle >= pitch_lookdown_lim) && (vt.RY >= 0.0f) ) { //俯角超出限制 (下俯为电机正方向)
             RC_PITCH = imu.Pitch_Angle;
-        }else if ( (Pitch6020_Angle <= pitch_lookup_lim) && (dbus.RY <= 0.0f) ){ //仰角超出限制 (上仰为电机负方向)
+        }else if ( (Pitch6020_Angle <= pitch_lookup_lim) && (vt.RY <= 0.0f) ){ //仰角超出限制 (上仰为电机负方向)
             RC_PITCH = imu.Pitch_Angle;
         }else {
-            RC_PITCH += rc_y_sensitivity * dbus.RY;
+            RC_PITCH += rc_y_sensitivity * vt.RY;
         }
         pitch_voltage = Pitch6020_PID(RC_PITCH, imu.Pitch_Angle, imu.Pitch_Velocity, 0);
 
@@ -37,10 +36,10 @@ void Head_Task(void)
 
         if (Load2006_iError > LOADER_IERROR_LIMIT - 1.0f) { REVERSE_COUNTER = 300; } //反转300ms
 
-        if (dbus.wheel >= 0.3f) {
+        if (vt.wheel >= 0.3f) {
             SHOOT_ON = 1;
-            RC_LoadV = dbus.wheel * loader_speed_level;
-        }else if (dbus.wheel <= -0.3f) {
+            RC_LoadV = vt.wheel * loader_speed_level;
+        }else if (vt.wheel <= -0.3f) {
             RC_LoadV = -50.0f;
         }else {
             RC_LoadV = 0;
@@ -53,7 +52,7 @@ void Head_Task(void)
         }
 
         //停止摩擦轮
-        if (1==SHOOT_ON && dbus.wheel <= -1){SHOOT_ON = 0;}
+        if (1==SHOOT_ON && vt.wheel <= -1){SHOOT_ON = 0;}
 
         shooter_current[0]=Shoot3508_PID(0, -500.0f*(float)SHOOT_ON - Shoot3508_Velocity[0]);
         shooter_current[1]=Shoot3508_PID(1, +500.0f*(float)SHOOT_ON - Shoot3508_Velocity[1]);

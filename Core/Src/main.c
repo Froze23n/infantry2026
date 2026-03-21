@@ -31,7 +31,6 @@
 /* USER CODE BEGIN Includes */
 #include "imu.h"
 #include "vt.h"
-#include "dbus.h"
 #include "referee.h"
 #include "motors.h"
 
@@ -99,12 +98,11 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_DMA_Init();
-  // MX_IWDG_Init();
+  MX_IWDG_Init();
   MX_TIM4_Init();
   MX_TIM6_Init();
   MX_TIM7_Init();
   MX_TIM10_Init();
-  MX_USART3_UART_Init();
   MX_SPI1_Init();
   MX_CAN1_Init();
   MX_CAN2_Init();
@@ -122,7 +120,6 @@ int main(void)
   __HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_3, 500);
   //初始化裁判系统, 遥控器, IMU, CAN
   VT_Init();
-  Dbus_Init();
   Referee_Init();
   IMU_Init();
   //关闭蜂鸣器

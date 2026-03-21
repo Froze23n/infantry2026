@@ -3,6 +3,10 @@
 
 #include "main.h"
 
+#define MODE_C 0
+#define MODE_N 1
+#define MODE_S 2
+
 #pragma pack(push, 1)
 typedef struct
 {
@@ -64,10 +68,57 @@ typedef struct
 
     uint16_t crc16;
 
-} VT_Type;
+} VT_Wire_Type;
 #pragma pack(pop)
 
+typedef struct
+{
+    float LX;
+    float LY;
+    float RX;
+    float RY;
+    float wheel;
+
+    uint8_t CNS;
+    uint8_t pause;
+    uint8_t FN_L;
+    uint8_t FN_R;
+    uint8_t trigger;
+
+    int16_t mouse_x;
+    int16_t mouse_y;
+    int16_t mouse_z;
+
+    uint8_t mouse_left;
+    uint8_t mouse_right;
+    uint8_t mouse_middle;
+
+    union {
+        uint16_t raw;
+        struct {
+            uint16_t W      : 1;
+            uint16_t S      : 1;
+            uint16_t A      : 1;
+            uint16_t D      : 1;
+            uint16_t SHIFT  : 1;
+            uint16_t CTRL   : 1;
+            uint16_t Q      : 1;
+            uint16_t E      : 1;
+            uint16_t R      : 1;
+            uint16_t F      : 1;
+            uint16_t G      : 1;
+            uint16_t Z      : 1;
+            uint16_t X      : 1;
+            uint16_t C      : 1;
+            uint16_t V      : 1;
+            uint16_t B      : 1;
+        } bit;
+    } keyboard;
+} VT_Host_Type;
+
 /* ------------------------------ Function Declaration (used in other .c files) ------------------------------ */
+
+extern VT_Host_Type vt;
 void VT_Init(void); //放在main
 void VT_IRQHandler(void); //放在中断处理函数中
 

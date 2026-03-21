@@ -164,12 +164,14 @@ void Head_Motors_Tx(int16_t Pitch_Voltage, int16_t Shooter_Current[2], int16_t L
 /*
  * 处理CAN1总线上的报文数据
  */
+int debug;
 static void CAN1_Rx_Handler(CAN_RxHeaderTypeDef RxHeader, const uint8_t RxData[8]) {
 	if(RxHeader.StdId == 0x209) //GM6020(id=5) #返回0x209
 	{
 		int16_t rawAngle = (int16_t)( (RxData[0]<<8) | RxData[1] );
-		rawAngle -= 3418; //magic number 取决于Yaw轴GM6020的安装角度
-		if(rawAngle>=4096){rawAngle-=8192;}//-> (4095)~(0)~(-4096)
+		debug = rawAngle;
+		rawAngle -= 6460; //magic number 取决于Yaw轴GM6020的安装角度
+		if(rawAngle<=-4096){rawAngle+=8192;}//-> (4095)~(0)~(-4096)
 		Yaw6020_Angle = (float)rawAngle * _pi_over_4096_; //-> [-pi,pi)
 	}
 	else if(RxHeader.StdId>0x200 && RxHeader.StdId<0x205) //4个m3508(1~4) #返回0x201-204
@@ -177,8 +179,6 @@ static void CAN1_Rx_Handler(CAN_RxHeaderTypeDef RxHeader, const uint8_t RxData[8
 		uint32_t i = RxHeader.StdId-(uint32_t)0x201;
 		int16_t rawVelocity = (int16_t)( (RxData[2]<<8) | RxData[3] );
 		Chas3508_Velocity[i] = (float)rawVelocity * _rads_per_rpm_;
-		int16_t rawCurrent = (int16_t)( (RxData[4]<<8) | RxData[5] );
-		Chas3508_Current[i] = fabsf((float)rawCurrent) * (20.0f/16384.0f); //电流换算公式 见RM官方文档
 	}
 	else
 	{

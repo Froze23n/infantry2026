@@ -1,6 +1,5 @@
 #include "neck_task.h"
-
-#include "dbus.h"
+#include "vt.h"
 #include "imu.h"
 #include "pid.h"
 #include "motors.h"
@@ -17,10 +16,10 @@ void Neck_Task(void)
     static float RC_YAW = 0;
     int16_t voltage = 0;
 
-    if (SW_MID == dbus.sw1 || SW_DOWN == dbus.sw1) {
+    if (vt.CNS != MODE_C) {
         float angle_diff = RC_YAW - imu.Yaw_Angle;
 
-        if (angle_diff > -PI/2 && angle_diff < PI/2) { RC_YAW -= rc_x_sensitivity * dbus.RX; } //注意方向
+        if (angle_diff > -PI/2 && angle_diff < PI/2) { RC_YAW -= rc_x_sensitivity * vt.RX; } //注意方向
         if (angle_diff > +PI) { RC_YAW -= 2*PI; }
         if (angle_diff < -PI) { RC_YAW += 2*PI; }
 
