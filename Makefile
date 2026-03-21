@@ -44,6 +44,7 @@ User/imu.c \
 User/motors.c \
 User/pid.c \
 User/referee.c \
+User/vt.c \
 Core/Src/main.c \
 Core/Src/gpio.c \
 Core/Src/can.c \

@@ -6,6 +6,7 @@
 #include "stm32f4xx_it.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "vt.h"
 #include "dbus.h"
 #include "referee.h"
 #include "imu.h"
@@ -240,7 +241,7 @@ void USART1_IRQHandler(void)
   /* USER CODE END USART1_IRQn 0 */
   HAL_UART_IRQHandler(&huart1);
   /* USER CODE BEGIN USART1_IRQn 1 */
-
+  VT_IRQHandler();
   /* USER CODE END USART1_IRQn 1 */
 }
 
@@ -375,7 +376,7 @@ void USART6_IRQHandler(void)
   /* USER CODE END USART6_IRQn 0 */
   HAL_UART_IRQHandler(&huart6);
   /* USER CODE BEGIN USART6_IRQn 1 */
-  Referee_UART_IRQHandler();
+  Referee_IRQHandler();
   /* USER CODE END USART6_IRQn 1 */
 }
 

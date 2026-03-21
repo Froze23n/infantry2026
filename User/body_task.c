@@ -12,14 +12,18 @@
 */
 
 const float M3508_Reduction_Ratio = 19.0f;
-float chassis_speed_level = M3508_Reduction_Ratio * 15.0f;
-float chassis_rotate_level = M3508_Reduction_Ratio * 5.0f;
+float chassis_speed_level = M3508_Reduction_Ratio * 20.0f;
+float chassis_rotate_level = M3508_Reduction_Ratio * 10.0f;
+float chassis_power_estimate = 0.0f;
 
 /*
  * 以125Hz频率执行此函数（与底盘电机回传频率保持一致）
  */
 void Body_Task(void)
 {
+   chassis_power_estimate = (Chas3508_Current[0] + Chas3508_Current[1]
+      + Chas3508_Current[2] + Chas3508_Current[3]) * 22.4f;
+
    int16_t current[4]={0,0,0,0};
 
    if (SW_MID == dbus.sw1 || SW_DOWN == dbus.sw1) {

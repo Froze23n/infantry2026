@@ -1,3 +1,7 @@
+## 本工程已改用Makefile进行开发
+教程详见 [https://l5595ex0wg.feishu.cn/docx/P6RJd18eNod6iaxqOVxckg1vnnj](URL)
+
+
 ## 控制逻辑
 
 `body_task`、`neck_task`、`head_task` 模块通过综合 `imu`、`dbus`、`motors` 

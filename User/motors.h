@@ -12,6 +12,7 @@ extern float Load2006_Velocity;//rad/s
 extern float Shoot3508_Velocity[2];
 //can1数据：yaw电机&麦轮
 extern float Chas3508_Velocity[4];
+extern float Chas3508_Current[4];
 extern float Yaw6020_Angle;//经过特殊处理，为(-pi,pi]
 
 /*函数声名*/

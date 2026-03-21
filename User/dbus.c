@@ -8,7 +8,7 @@
 #define DBUS_HDMA_RX (huart3.hdmarx)  // 定义遥控器DMA句柄
 #define DBUS_HUART_BASE USART3
 
-#define DBUS_RX_BUF_NUM 36  // 设置DMA接收数组长度为36字节，防止接收越界
+#define DBUS_RX_BUF_SIZE 36  // 设置DMA接收数组长度为36字节，防止接收越界
 #define DBUS_FRAME_LENGTH 18  // 一帧遥控器数据为18字节
 
 #define DBUS_RATIO 660.0f  // 摇杆数值CH归一化比例
@@ -16,8 +16,7 @@
 
 /* ------------------------------ Global Variable ------------------------------ */
 DBUS_Type dbus;                             // 当前和上次键鼠、遥控器数据，上次数据更新为当前数据的周期为1ms
-uint32_t dbus_tick;                       // 接收到数据的时刻
-uint8_t DbusRxBuf[2][DBUS_RX_BUF_NUM];  // 接收到的原始数据
+uint8_t DbusRxBuf[2][DBUS_RX_BUF_SIZE];  // 接收到的原始数据
 
 /* ------------------------------ Function Declaration (only used in this .c file) ------------------------------ */
 static void Dbus_Data_Process(DBUS_Type *dbus, const uint8_t *buff);
@@ -41,7 +40,7 @@ void Dbus_Init()
 	DBUS_HDMA_RX->Instance->PAR = (uint32_t) & (DBUS_HUART_BASE->DR);  // 设置传输源地址为串口的数据寄存器
 	DBUS_HDMA_RX->Instance->M0AR = (uint32_t)(DbusRxBuf[0]);  // 内存缓冲区1
 	DBUS_HDMA_RX->Instance->M1AR = (uint32_t)(DbusRxBuf[1]);  // 内存缓冲区2
-	DBUS_HDMA_RX->Instance->NDTR = DBUS_RX_BUF_NUM;           // 设置DMA接收数据长度
+	DBUS_HDMA_RX->Instance->NDTR = DBUS_RX_BUF_SIZE;           // 设置DMA接收数据长度
 	SET_BIT(DBUS_HDMA_RX->Instance->CR, DMA_SxCR_DBM);        // 使能双缓冲区
 
 	__HAL_DMA_ENABLE(DBUS_HDMA_RX);  // 使能DMA
@@ -64,8 +63,8 @@ void Dbus_UART_IRQHandler(void)
 				__HAL_DMA_DISABLE(DBUS_HDMA_RX);
 			}
 
-			this_time_rx_len = DBUS_RX_BUF_NUM - DBUS_HDMA_RX->Instance->NDTR;  // 本次接收到的数据长度=设定长度-剩余长度
-			DBUS_HDMA_RX->Instance->NDTR = DBUS_RX_BUF_NUM;                     // 重新设置传输的数据长度
+			this_time_rx_len = DBUS_RX_BUF_SIZE - DBUS_HDMA_RX->Instance->NDTR;  // 本次接收到的数据长度=设定长度-剩余长度
+			DBUS_HDMA_RX->Instance->NDTR = DBUS_RX_BUF_SIZE;                     // 重新设置传输的数据长度
 			DBUS_HDMA_RX->Instance->CR |= DMA_SxCR_CT;                          // 设定缓冲区1
 
 			__HAL_DMA_ENABLE(DBUS_HDMA_RX);  // 使能DMA
@@ -81,8 +80,8 @@ void Dbus_UART_IRQHandler(void)
 				__HAL_DMA_DISABLE(DBUS_HDMA_RX);
 			}
 
-			this_time_rx_len = DBUS_RX_BUF_NUM - DBUS_HDMA_RX->Instance->NDTR;  // 本次接收到的数据长度=设定长度-剩余长度
-			DBUS_HDMA_RX->Instance->NDTR = DBUS_RX_BUF_NUM;                     // 重新设置传输的数据长度
+			this_time_rx_len = DBUS_RX_BUF_SIZE - DBUS_HDMA_RX->Instance->NDTR;  // 本次接收到的数据长度=设定长度-剩余长度
+			DBUS_HDMA_RX->Instance->NDTR = DBUS_RX_BUF_SIZE;                     // 重新设置传输的数据长度
 			DBUS_HDMA_RX->Instance->CR &= ~(DMA_SxCR_CT);                       // 设定缓冲区0
 
 			__HAL_DMA_ENABLE(DBUS_HDMA_RX);  // 使能DMA
@@ -100,9 +99,6 @@ void Dbus_UART_IRQHandler(void)
  */
 static void Dbus_Data_Process(DBUS_Type *dbus, const uint8_t *buff)
 {
-	//接收到遥控器数据则喂狗，防止程序重启
-	HAL_IWDG_Refresh(&hiwdg);
-
 	//  得到摇杆数据
 	int16_t ch1 = (int16_t)( (buff[0] | (buff[1] << 8)) & 0x07FF );
 	int16_t ch2 = (int16_t)( ((buff[1] >> 3) | (buff[2] << 5)) & 0x07FF );

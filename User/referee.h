@@ -34,7 +34,7 @@ typedef enum
     //0x308 选手端小地图交互数据 机器人->选手端
     //0x309-0x311 (图传链路)
     //0xA01-0xA06 (雷达无线电路)
-} CMD_ID_ENUM;
+} Referee_CMD_ID_ENUM;
 
 typedef enum
 {
@@ -57,7 +57,7 @@ typedef enum
 
     LEN_robot_interaction_data = LEN_0X301, // 0x0301
 
-} CMD_LEN_ENUM;
+} Referee_CMD_LEN_ENUM;
 
 #pragma pack(push, 1)
 /*------------------------------结构体定义------------------------------*/
@@ -210,6 +210,6 @@ extern Referee_Type referee;
 
 /*  ------------------------------Function Declarations------------------------------  */
 void Referee_Init(void);
-void Referee_UART_IRQHandler(void);
+void Referee_IRQHandler(void);
 
 #endif //REFEREE_H

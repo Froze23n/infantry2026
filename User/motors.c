@@ -1,6 +1,7 @@
 #include "motors.h"
 #include "can.h"
 #include "tim.h"
+#include <math.h>
 
 /**
 命令     类型     编号    反馈
@@ -35,6 +36,7 @@ float Load2006_Velocity=0;
 float Shoot3508_Velocity[2] = {0,0};
 //can2数据：yaw电机&麦轮
 float Chas3508_Velocity[4] = {0,0,0,0};
+float Chas3508_Current[4] = {0,0,0,0};
 float Yaw6020_Angle = 0.0f;//(-pi,pi]
 
 /* ------------------------------ 函数 ------------------------------ */
@@ -175,6 +177,8 @@ static void CAN1_Rx_Handler(CAN_RxHeaderTypeDef RxHeader, const uint8_t RxData[8
 		uint32_t i = RxHeader.StdId-(uint32_t)0x201;
 		int16_t rawVelocity = (int16_t)( (RxData[2]<<8) | RxData[3] );
 		Chas3508_Velocity[i] = (float)rawVelocity * _rads_per_rpm_;
+		int16_t rawCurrent = (int16_t)( (RxData[4]<<8) | RxData[5] );
+		Chas3508_Current[i] = fabsf((float)rawCurrent) * (20.0f/16384.0f); //电流换算公式 见RM官方文档
 	}
 	else
 	{

@@ -7,22 +7,22 @@
 #define REFE_HUART huart6              // 定义遥控器串口句柄
 #define REFE_HDMA_RX huart6.hdmarx  // 定义遥控器DMA句柄
 #define REFE_HUART_BASE USART6
-#define MAX_RX_SIZE 256
+#define REFE_RX_BUF_SIZE 256
 #define SOF 0xA5
 /* ------------------------------ 变量 ------------------------------ */
 Referee_Type referee;
-static uint8_t rxbuffer[2][MAX_RX_SIZE];
+static uint8_t REFE_RxBuf[2][REFE_RX_BUF_SIZE];
 
 struct
 {
-    unsigned a,b,c,d,e;
+    unsigned a,b,c,d,e,f;
 } referee_error;
-unsigned npack=0;
+unsigned refe_pack=0;
 
 
 static uint8_t Get_CRC8_Check_Sum(uint8_t *pchMessage,uint32_t dwLength);
 static uint16_t Get_CRC16_Check_Sum(uint8_t *pchMessage,uint32_t dwLength);
-static void Refe_Data_Process(uint8_t* buffer, int32_t length);
+static void Refe_Data_Process(uint8_t* buffer, int32_t total_length);
 
 /*-------------------------------------------------- 函数 --------------------------------------------------*/
 void Referee_Init(void)
@@ -34,14 +34,14 @@ void Referee_Init(void)
     }while (REFE_HDMA_RX->Instance->CR & DMA_SxCR_EN); //检查是否失能
     //配置DMA
     REFE_HDMA_RX->Instance->PAR = (uint32_t) &(REFE_HUART_BASE->DR); //传输源地址为串口的数据寄存器
-    REFE_HDMA_RX->Instance->M0AR= (uint32_t)(rxbuffer[0]); //内存缓冲区0
-    REFE_HDMA_RX->Instance->M1AR= (uint32_t)(rxbuffer[1]); //内存缓冲区1
-    REFE_HDMA_RX->Instance->NDTR= MAX_RX_SIZE; //256
+    REFE_HDMA_RX->Instance->M0AR= (uint32_t)(REFE_RxBuf[0]); //内存缓冲区0
+    REFE_HDMA_RX->Instance->M1AR= (uint32_t)(REFE_RxBuf[1]); //内存缓冲区1
+    REFE_HDMA_RX->Instance->NDTR= REFE_RX_BUF_SIZE; //256
     SET_BIT(REFE_HDMA_RX->Instance->CR, DMA_SxCR_DBM); //使能双缓冲区
     __HAL_DMA_ENABLE(REFE_HDMA_RX); //启动！
 }
 
-void Referee_UART_IRQHandler(void)
+void Referee_IRQHandler(void)
 {
     if(REFE_HUART.Instance->SR & UART_FLAG_IDLE) //仅处理空闲中断
     {
@@ -52,30 +52,32 @@ void Referee_UART_IRQHandler(void)
             __HAL_DMA_DISABLE(REFE_HDMA_RX); //失能DMA
         }while (REFE_HDMA_RX->Instance->CR & DMA_SxCR_EN); //轮询是否失能
 
-        currxlen = MAX_RX_SIZE - REFE_HDMA_RX->Instance->NDTR; //记录数据长度
+        currxlen = REFE_RX_BUF_SIZE - REFE_HDMA_RX->Instance->NDTR; //记录数据长度
         
-        REFE_HDMA_RX->Instance->NDTR = MAX_RX_SIZE; //重设长度
+        REFE_HDMA_RX->Instance->NDTR = REFE_RX_BUF_SIZE; //重设长度
 
         if( (REFE_HDMA_RX->Instance->CR & DMA_SxCR_CT) == 0 )
         {
             REFE_HDMA_RX->Instance->CR |= DMA_SxCR_CT; //0->1 更换缓冲区
             __HAL_DMA_ENABLE(REFE_HDMA_RX); //启动接收
-            Refe_Data_Process(rxbuffer[0], (int32_t)currxlen); //数据处理
+            Refe_Data_Process(REFE_RxBuf[0], (int32_t)currxlen); //数据处理
         }
         else
         {
             REFE_HDMA_RX->Instance->CR &= ~DMA_SxCR_CT; //1->0 更换缓冲区
             __HAL_DMA_ENABLE(REFE_HDMA_RX); //启动接收
-            Refe_Data_Process(rxbuffer[1], (int32_t)currxlen); //数据处理
+            Refe_Data_Process(REFE_RxBuf[1], (int32_t)currxlen); //数据处理
         }
     }
 }
 
 static void Refe_Data_Process(uint8_t* buffer, int32_t total_length)
 {
+    if(total_length > REFE_RX_BUF_SIZE){referee_error.f++;} //数据长度过大
+    
     while(total_length!=0)
     {
-        npack++;
+        refe_pack++;
         if(total_length<0){referee_error.a++; return;} //最后一个数据包残缺
 
         if(SOF!=buffer[0]){referee_error.b++; return;} //起始字节错误
@@ -95,7 +97,12 @@ static void Refe_Data_Process(uint8_t* buffer, int32_t total_length)
         uint8_t *data = buffer + 7; //5(帧头)+2(cmd_id)
         uint16_t CRC16 = data[data_length] | (data[data_length+1]<<8); //数据段后2字节为CRC16校验
 
-        if(CRC16!=Get_CRC16_Check_Sum(buffer, data_length + 7)){referee_error.e++; return;} //CRC16校验错误
+        if(CRC16 != Get_CRC16_Check_Sum(buffer, data_length + 7)){
+            referee_error.e++;
+            buffer += (data_length + 9);
+            total_length -= (data_length + 9);
+            continue; //CRC16校验错误，丢弃该数据包继续处理下一个数据包
+        }
         
         switch (cmd_id) {
             case ID_game_status: memcpy(&referee.game_status, data, sizeof(game_status_t)); break;
@@ -119,6 +126,7 @@ static void Refe_Data_Process(uint8_t* buffer, int32_t total_length)
             default: break;
         }
 
+        //本数据包处理完成，指针后移，继续处理下一个数据包
         buffer += (data_length + 9); //5(帧头)+2(cmd_id)+2(CRC16)
         total_length -= (data_length + 9);
     }
@@ -126,7 +134,7 @@ static void Refe_Data_Process(uint8_t* buffer, int32_t total_length)
 
 /*--------------------------------------------------CRC8--------------------------------------------------*/
 static const unsigned char CRC8_INIT = 0xff;
-const unsigned char CRC8_TAB[256] =  
+static const unsigned char CRC8_TAB[256] =  
 {  
     0x00, 0x5e, 0xbc, 0xe2, 0x61, 0x3f, 0xdd, 0x83, 0xc2, 0x9c, 0x7e, 0x20, 0xa3, 0xfd, 0x1f, 0x41,  
     0x9d, 0xc3, 0x21, 0x7f, 0xfc, 0xa2, 0x40, 0x1e, 0x5f, 0x01, 0xe3, 0xbd, 0x3e, 0x60, 0x82, 0xdc, 
