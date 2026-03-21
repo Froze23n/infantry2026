@@ -4,8 +4,6 @@
 #include "main.h"
 
 /*------------------------------命令码、数据长度宏定义------------------------------*/
-#define LEN_0X301 (10 + 6) // 自定义UI界面
-
 typedef enum
 {
     ID_game_status = 0x0001,                // 比赛状态 1Hz
@@ -25,6 +23,7 @@ typedef enum
     ID_projectile_allowance = 0x208,        // 允许发弹量 10Hz
     ID_rfid_status = 0x209,                 // 机器人RFID模块状态 3Hz
     //0x20A - 0x20E (给飞镖/哨兵/雷达)
+
     ID_robot_interaction_data = 0x0301,     // 机器人间交互, 发送方触发发送, 频率上限为30Hz
     //0x302 (图传链路)
     //0x303 选手端小地图交互数据 选手端->机器人
@@ -35,29 +34,6 @@ typedef enum
     //0x309-0x311 (图传链路)
     //0xA01-0xA06 (雷达无线电路)
 } Referee_CMD_ID_ENUM;
-
-typedef enum
-{
-    LEN_game_status = 11,			        // 0x0001
-    LEN_game_result = 1,				    // 0x0002
-    LEN_game_robot_HP = 16,					// 0x0003
-
-    LEN_event_data = 4,						// 0x0101
-    LEN_referee_warning = 3,			    // 0x0104
-    LEN_dart_info = 3,                      // 0x0105
-
-    LEN_robot_status = 13,					// 0x0201
-    LEN_power_heat_data = 14,			    // 0x0202
-    LEN_robot_pos = 16,					    // 0x0203
-    LEN_buff = 8,							// 0x0204
-    LEN_hurt_data = 1,						// 0x0206
-    LEN_shoot_data = 7,						// 0x0207
-    LEN_projectile_allowance = 6,           // 0x0208
-    LEN_rfid_status = 5,                    // 0x0209
-
-    LEN_robot_interaction_data = LEN_0X301, // 0x0301
-
-} Referee_CMD_LEN_ENUM;
 
 #pragma pack(push, 1)
 /*------------------------------结构体定义------------------------------*/
@@ -173,14 +149,25 @@ typedef struct
     uint8_t rfid_status_2;
 }rfid_status_t; // 0x0209
 
-/*------------------------------结构体定义------------------------------*/
 typedef struct
 {
-    uint16_t data_cmd_id;
-    uint16_t sender_id;
-    uint16_t receiver_id;
-    uint8_t user_data[LEN_0X301 - 6];
-}robot_interaction_data_t;
+    uint8_t figure_name[3];
+    
+    uint32_t operate_tpye:3;
+    uint32_t figure_tpye:3;
+    uint32_t layer:4;
+    uint32_t color:4;
+    uint32_t details_a:9;
+    uint32_t details_b:9;
+
+    uint32_t width:10;
+    uint32_t start_x:11;
+    uint32_t start_y:11;
+
+    uint32_t details_c:10;
+    uint32_t details_d:11;
+    uint32_t details_e:11;
+}interaction_figure_t;
 
 #pragma pack(pop)
 /*------------------------------总体结构体定义------------------------------*/
@@ -201,8 +188,6 @@ typedef struct {
     shoot_data_t            shoot_data;
     projectile_allowance_t  projectile_allowance;
     rfid_status_t           rfid_status;
-
-    robot_interaction_data_t    robot_interaction_data;
 } Referee_Type;
 
 /*  ------------------------------Extern Global Variable------------------------------  */
@@ -211,5 +196,7 @@ extern Referee_Type referee;
 /*  ------------------------------Function Declarations------------------------------  */
 void Referee_Init(void);
 void Referee_IRQHandler(void);
+
+void Referee_UI_Update(void);
 
 #endif //REFEREE_H

@@ -122,7 +122,6 @@ static void Refe_Data_Process(uint8_t* buffer, int32_t total_length)
             case ID_projectile_allowance: memcpy(&referee.projectile_allowance, data, sizeof(projectile_allowance_t)); break;
             case ID_rfid_status: memcpy(&referee.rfid_status, data, sizeof(rfid_status_t)); break;
 
-            case ID_robot_interaction_data: memcpy(&referee.robot_interaction_data, data, sizeof(robot_interaction_data_t)); break;
             default: break;
         }
 
@@ -131,6 +130,59 @@ static void Refe_Data_Process(uint8_t* buffer, int32_t total_length)
         total_length -= (data_length + 9);
     }
 }
+
+static uint8_t txbuf[128] = {0};
+void Referee_UI_Update(void){
+    txbuf[0] = SOF;
+    
+    uint16_t data_length = 21; //6+15选手端绘制一个图形
+    txbuf[1] = (uint8_t)data_length;
+    txbuf[2] = (uint8_t)(data_length >> 8);
+    
+    static uint8_t seq = 0;
+    txbuf[3] = seq++; //包序列号
+
+    txbuf[4] = Get_CRC8_Check_Sum(txbuf, 4); //帧头CRC8校验
+
+    txbuf[5] = (uint8_t)ID_robot_interaction_data;
+    txbuf[6] = (uint8_t)(ID_robot_interaction_data >> 8);
+
+    uint16_t data_cmd_id = 0x101; //选手端绘制一个图形
+    txbuf[7] = (uint8_t)data_cmd_id;
+    txbuf[8] = (uint8_t)(data_cmd_id >> 8);
+
+    uint16_t sender_id = referee.robot_status.robot_id; //发送者ID为本机器人ID
+    txbuf[9] = (uint8_t)sender_id;
+    txbuf[10] = (uint8_t)(sender_id >> 8);
+
+    uint16_t receiver_id = (sender_id < 0x0100) ? (sender_id + 0x0100) : (sender_id + 0x0064); //选手端ID
+    txbuf[11] = (uint8_t)receiver_id;
+    txbuf[12] = (uint8_t)(receiver_id >> 8);
+
+    interaction_figure_t *figure = (interaction_figure_t *)&txbuf[13];
+    figure->figure_name[0] = 'A';
+    figure->figure_name[1] = '0';
+    figure->figure_name[2] = '1';
+    
+    figure->operate_tpye = 1; //0空操作 1增加 2修改 3删除
+    figure->figure_tpye = 2; //正圆
+    figure->layer = 1; //图层0~9 
+    figure->color = 1; //黄色
+    
+    //1920x1080
+    figure->width = 100;
+    figure->start_x = 1920/2;
+    figure->start_y = 1080/2;
+
+    figure->details_c = 300; //半径
+
+    uint16_t CRC16 = Get_CRC16_Check_Sum(txbuf, data_length + 7); //数据段后2字节为CRC16校验
+    txbuf[data_length + 7] = (uint8_t)CRC16;
+    txbuf[data_length + 8] = (uint8_t)(CRC16 >> 8);
+
+    HAL_UART_Transmit_DMA(&REFE_HUART, txbuf, data_length + 9); //5(帧头)+2(cmd_id)+2(CRC16)
+}
+
 
 /*--------------------------------------------------CRC8--------------------------------------------------*/
 static const unsigned char CRC8_INIT = 0xff;

@@ -85,9 +85,9 @@ typedef struct
     uint8_t FN_R;
     uint8_t trigger;
 
-    int16_t mouse_x;
-    int16_t mouse_y;
-    int16_t mouse_z;
+    float mouse_x;
+    float mouse_y;
+    float mouse_z;
 
     uint8_t mouse_left;
     uint8_t mouse_right;

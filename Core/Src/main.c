@@ -118,7 +118,7 @@ int main(void)
   //开启蜂鸣器
   HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_3);
   __HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_3, 500);
-  //初始化裁判系统, 遥控器, IMU, CAN
+  //初始化
   VT_Init();
   Referee_Init();
   IMU_Init();
@@ -133,6 +133,7 @@ int main(void)
   Enable_Motors();
   while (1)
   {
+    Referee_UI_Update();
     HAL_Delay(900);
     HAL_GPIO_TogglePin(Green_GPIO_Port,Green_Pin); //绿灯常闪
     /* USER CODE END WHILE */

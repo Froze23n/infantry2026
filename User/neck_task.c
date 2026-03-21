@@ -19,7 +19,7 @@ void Neck_Task(void)
     if (vt.CNS != MODE_C) {
         float angle_diff = RC_YAW - imu.Yaw_Angle;
 
-        if (angle_diff > -PI/2 && angle_diff < PI/2) { RC_YAW -= rc_x_sensitivity * vt.RX; } //注意方向
+        if (angle_diff > -PI/2 && angle_diff < PI/2) { RC_YAW -= rc_x_sensitivity * (vt.RX + vt.mouse_x); } //注意方向
         if (angle_diff > +PI) { RC_YAW -= 2*PI; }
         if (angle_diff < -PI) { RC_YAW += 2*PI; }
 

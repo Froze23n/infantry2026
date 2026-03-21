@@ -14,6 +14,30 @@ const float M3508_Reduction_Ratio = 19.0f;
 float chassis_speed_level = M3508_Reduction_Ratio * 20.0f;
 float chassis_rotate_level = M3508_Reduction_Ratio * 10.0f;
 
+static float slopeX(int x){
+   static float ret = 0;
+   switch(x){
+      case +1: ret += 0.032f; break;
+      case -1: ret -= 0.032f; break;
+      case 0 : ret *= 0.985f; break;
+   }
+   if(ret > +1.0f){ ret = +1.0f;}
+   if(ret < -1.0f){ ret = -1.0f;}
+   return ret;
+}
+
+static float slopeY(int y){
+   static float ret = 0;
+   switch(y){
+      case +1: ret += 0.032f; break;
+      case -1: ret -= 0.032f; break;
+      case 0 : ret *= 0.9f; break;
+   }
+   if(ret > +1.0f){ ret = +1.0f;}
+   if(ret < -1.0f){ ret = -1.0f;}
+   return ret;
+}
+
 /*
  * 以125Hz频率执行此函数（与底盘电机回传频率保持一致）
  */
@@ -22,8 +46,8 @@ void Body_Task(void)
    int16_t current[4]={0,0,0,0};
 
    if (vt.CNS != MODE_C) {
-      float x = vt.LX;
-      float y = vt.LY;
+      float x = vt.LX + slopeX(vt.keyboard.bit.D - vt.keyboard.bit.A);
+      float y = vt.LY + slopeY(vt.keyboard.bit.W - vt.keyboard.bit.S);
       float z = 0.0f;
 
       float r;

@@ -164,12 +164,10 @@ void Head_Motors_Tx(int16_t Pitch_Voltage, int16_t Shooter_Current[2], int16_t L
 /*
  * 处理CAN1总线上的报文数据
  */
-int debug;
 static void CAN1_Rx_Handler(CAN_RxHeaderTypeDef RxHeader, const uint8_t RxData[8]) {
 	if(RxHeader.StdId == 0x209) //GM6020(id=5) #返回0x209
 	{
 		int16_t rawAngle = (int16_t)( (RxData[0]<<8) | RxData[1] );
-		debug = rawAngle;
 		rawAngle -= 6460; //magic number 取决于Yaw轴GM6020的安装角度
 		if(rawAngle<=-4096){rawAngle+=8192;}//-> (4095)~(0)~(-4096)
 		Yaw6020_Angle = (float)rawAngle * _pi_over_4096_; //-> [-pi,pi)

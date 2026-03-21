@@ -103,9 +103,9 @@ static void VT_Data_Process(uint8_t* buffer, int32_t length){
                 vt.FN_R = vt_wire->rc.bit.fn_2;
                 vt.trigger = vt_wire->rc.bit.trigger;
                 
-                vt.mouse_x = vt_wire->mouse.bit.mouse_x;
-                vt.mouse_y = vt_wire->mouse.bit.mouse_y;
-                vt.mouse_z = vt_wire->mouse.bit.mouse_z;
+                vt.mouse_x = (float)vt_wire->mouse.bit.mouse_x / 327.680f;
+                vt.mouse_y = -(float)vt_wire->mouse.bit.mouse_y / 327.680f;
+                vt.mouse_z = (float)vt_wire->mouse.bit.mouse_z / 327.680f;
                 vt.mouse_left = vt_wire->mouse.bit.mouse_left;
                 vt.mouse_right = vt_wire->mouse.bit.mouse_right;
                 vt.mouse_middle = vt_wire->mouse.bit.mouse_middle;
@@ -118,7 +118,10 @@ static void VT_Data_Process(uint8_t* buffer, int32_t length){
 			length -= VT_RC_LEN; //更新剩余长度
 		}else if(buffer[0] == 0xA5){
 			//裁判系统图传链路数据
-			return; //Todo: 处理图传链路数据
+            uint16_t data_length = buffer[1] | buffer[2]<<8; //数据段长度
+            //步兵不需要自定义控制器数据，直接丢弃
+            buffer += (data_length + 9);
+            length -= (data_length + 9);
 		}else{
 			return;
 		}

@@ -21,13 +21,14 @@ void Head_Task(void)
     int16_t shooter_current[2]={0,0}; //摩擦轮控制电流
     static int16_t loader_current=0; //拨弹盘控制电流
 
+    float Y = (vt.RY + vt.mouse_y);
     if (vt.CNS != MODE_C) {
-        if ( (Pitch6020_Angle >= pitch_lookdown_lim) && (vt.RY >= 0.0f) ) { //俯角超出限制 (下俯为电机正方向)
+        if ( (Pitch6020_Angle >= pitch_lookdown_lim) && (Y >= 0.0f) ) { //俯角超出限制 (下俯为电机正方向)
             RC_PITCH = imu.Pitch_Angle;
-        }else if ( (Pitch6020_Angle <= pitch_lookup_lim) && (vt.RY <= 0.0f) ){ //仰角超出限制 (上仰为电机负方向)
+        }else if ( (Pitch6020_Angle <= pitch_lookup_lim) && (Y <= 0.0f) ){ //仰角超出限制 (上仰为电机负方向)
             RC_PITCH = imu.Pitch_Angle;
         }else {
-            RC_PITCH += rc_y_sensitivity * vt.RY;
+            RC_PITCH += rc_y_sensitivity * Y;
         }
         pitch_voltage = Pitch6020_PID(RC_PITCH, imu.Pitch_Angle, imu.Pitch_Velocity, 0);
 
