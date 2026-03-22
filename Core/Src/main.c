@@ -134,7 +134,7 @@ int main(void)
   while (1)
   {
     Referee_UI_Update();
-    HAL_Delay(900);
+    HAL_Delay(50);
     HAL_GPIO_TogglePin(Green_GPIO_Port,Green_Pin); //绿灯常闪
     /* USER CODE END WHILE */
 

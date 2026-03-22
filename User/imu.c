@@ -5,7 +5,8 @@
 #include "math.h"
 
 //经验误差
-const float YAW_GYRO_COMPENSATION = -0.14f;
+// const
+ float YAW_GYRO_COMPENSATION = +0.5f;
 
 //变量
 static imu_raw_data_t imu_raw_data = {0,0,0,0,0,0,0};

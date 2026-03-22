@@ -1,6 +1,7 @@
 #include "referee.h"
 #include "usart.h"
 #include <string.h>
+#include <stdlib.h>
 
 //裁判系统常规链路
 /* ------------------------------ 宏定义 变量 内部函数声明 ------------------------------ */
@@ -132,10 +133,19 @@ static void Refe_Data_Process(uint8_t* buffer, int32_t total_length)
 }
 
 static uint8_t txbuf[128] = {0};
+uint32_t CAP = 50;
+uint32_t AIMX = 960;
+uint32_t AIMY = 540;
 void Referee_UI_Update(void){
-    txbuf[0] = SOF;
+    //图形信息更新
+    CAP = (CAP >= 540) ? (0) : (CAP+10);
+    AIMX = 860 + rand()%200;
+    AIMY = 440 + rand()%200;
+
+
+    txbuf[0] = SOF; //串口链路帧头
     
-    uint16_t data_length = 21; //6+15选手端绘制一个图形
+    uint16_t data_length = 36; //6+15*2选手端绘制2个图形
     txbuf[1] = (uint8_t)data_length;
     txbuf[2] = (uint8_t)(data_length >> 8);
     
@@ -147,7 +157,7 @@ void Referee_UI_Update(void){
     txbuf[5] = (uint8_t)ID_robot_interaction_data;
     txbuf[6] = (uint8_t)(ID_robot_interaction_data >> 8);
 
-    uint16_t data_cmd_id = 0x101; //选手端绘制一个图形
+    uint16_t data_cmd_id = 0x102; //选手端绘制2个图形
     txbuf[7] = (uint8_t)data_cmd_id;
     txbuf[8] = (uint8_t)(data_cmd_id >> 8);
 
@@ -159,27 +169,37 @@ void Referee_UI_Update(void){
     txbuf[11] = (uint8_t)receiver_id;
     txbuf[12] = (uint8_t)(receiver_id >> 8);
 
+    //绘制第一个图形
     interaction_figure_t *figure = (interaction_figure_t *)&txbuf[13];
-    figure->figure_name[0] = 'A';
-    figure->figure_name[1] = '0';
-    figure->figure_name[2] = '1';
-    
-    figure->operate_tpye = 1; //0空操作 1增加 2修改 3删除
-    figure->figure_tpye = 2; //正圆
-    figure->layer = 1; //图层0~9 
-    figure->color = 1; //黄色
-    
+    figure->figure_name[0] = 'C'; figure->figure_name[1] = 'A'; figure->figure_name[2] = 'P';
+    //一定频率进行增加操作，防止图形丢失
+    figure->operate_type = (seq % 32) ? 2:1 ; //0空操作 1增加 2修改 3删除
+    figure->figure_type = 0; //直线
+    figure->layer = 0; //图层0~9
+    figure->color = 0; //红蓝(己方颜色)
     //1920x1080
-    figure->width = 100;
-    figure->start_x = 1920/2;
-    figure->start_y = 1080/2;
+    figure->width = 20; //线宽
+    figure->start_x = 690; //起始位置x
+    figure->start_y = 250; //起始位置y
+    figure->details_d = figure->start_x + CAP; //线段结束位置x
+    figure->details_e = figure->start_y; //线段结束位置y
 
-    figure->details_c = 300; //半径
-
+    //绘制第二个图形
+    figure = (interaction_figure_t *)&txbuf[28]; //13+15
+    figure->operate_type = (seq % 32) ? 2:1 ;
+    figure->figure_type = 1; //矩形 有框你不打？
+    figure->layer = 1;
+    figure->color = 1; //黄色
+    figure->width = 5;
+    figure->start_x = AIMX - 60;
+    figure->start_y = AIMY - 40;
+    figure->details_d = AIMX + 60;
+    figure->details_e = AIMY + 40;
+    
     uint16_t CRC16 = Get_CRC16_Check_Sum(txbuf, data_length + 7); //数据段后2字节为CRC16校验
     txbuf[data_length + 7] = (uint8_t)CRC16;
     txbuf[data_length + 8] = (uint8_t)(CRC16 >> 8);
-
+    
     HAL_UART_Transmit_DMA(&REFE_HUART, txbuf, data_length + 9); //5(帧头)+2(cmd_id)+2(CRC16)
 }
 
