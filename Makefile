@@ -44,6 +44,7 @@ User/motors.c \
 User/pid.c \
 User/referee.c \
 User/vt.c \
+User/usb.c \
 Core/Src/main.c \
 Core/Src/gpio.c \
 Core/Src/can.c \

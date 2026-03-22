@@ -37,9 +37,9 @@ void Head_Task(void)
 
         if (Load2006_iError > LOADER_IERROR_LIMIT - 1.0f) { REVERSE_COUNTER = 300; } //反转300ms
 
-        if (vt.wheel >= 0.3f) {
+        if (vt.wheel >= 0.3f || vt.mouse_left) {
             SHOOT_ON = 1;
-            RC_LoadV = vt.wheel * loader_speed_level;
+            RC_LoadV = (vt.wheel + vt.mouse_left) * loader_speed_level;
         }else if (vt.wheel <= -0.3f) {
             RC_LoadV = -50.0f;
         }else {
@@ -53,10 +53,10 @@ void Head_Task(void)
         }
 
         //停止摩擦轮
-        if (1==SHOOT_ON && vt.wheel <= -1){SHOOT_ON = 0;}
+        if (1==SHOOT_ON && (vt.wheel <= -1 || vt.keyboard.bit.R)){SHOOT_ON = 0;}
 
-        shooter_current[0]=Shoot3508_PID(0, -500.0f*(float)SHOOT_ON - Shoot3508_Velocity[0]);
-        shooter_current[1]=Shoot3508_PID(1, +500.0f*(float)SHOOT_ON - Shoot3508_Velocity[1]);
+        shooter_current[0]=Shoot3508_PID(0, -700.0f*(float)SHOOT_ON - Shoot3508_Velocity[0]);
+        shooter_current[1]=Shoot3508_PID(1, +700.0f*(float)SHOOT_ON - Shoot3508_Velocity[1]);
 
         loader_current = Load2006_PID(RC_LoadV - Load2006_Velocity);
     }else {

@@ -31,7 +31,7 @@ static float slopeY(int y){
    switch(y){
       case +1: ret += 0.032f; break;
       case -1: ret -= 0.032f; break;
-      case 0 : ret *= 0.9f; break;
+      case 0 : ret *= 0.900f; break;
    }
    if(ret > +1.0f){ ret = +1.0f;}
    if(ret < -1.0f){ ret = -1.0f;}
@@ -48,7 +48,7 @@ void Body_Task(void)
    if (vt.CNS != MODE_C) {
       float x = vt.LX + slopeX(vt.keyboard.bit.D - vt.keyboard.bit.A);
       float y = vt.LY + slopeY(vt.keyboard.bit.W - vt.keyboard.bit.S);
-      float z = 0.0f;
+      static float z = 0.0f;
 
       float r;
       arm_sqrt_f32(x*x + y*y, &r); // |r|
@@ -67,23 +67,31 @@ void Body_Task(void)
       }
 
       if (vt.CNS == MODE_N) {
-         z = Chas_Calc_Z(Yaw6020_Angle);
-      }else {
-         //右侧拨杆控制小陀螺模式的底盘速度 注意z的初始值为0  UP(+3) MID(0) DOWN(-3)
-         z = 0.0f;
+         z = 0.0f; //Chas_Calc_Z(Yaw6020_Angle);
+      }else if(vt.CNS == MODE_S) {
+         //右侧拨杆控制小陀螺模式的底盘速度 注意z的初始值为0
+         if(vt.keyboard.bit.E){
+            z = -2.0f;
+         }
+         if(vt.keyboard.bit.Q){
+            z = +2.0f;
+         }
+         if(vt.keyboard.bit.R){
+            z = 0.0f;
+         }
       }
 
       //设置速度等级
-      x *= chassis_speed_level;
-      y *= chassis_speed_level;
-      z *= chassis_rotate_level/(1.0f+r); //防止电机转速不够, 导致告诉旋转时无法平移
+      float X = x * chassis_speed_level;
+      float Y = y * chassis_speed_level;
+      float Z = z * chassis_rotate_level/(1.0f+r); //防止电机转速不够, 导致告诉旋转时无法平移
 
       //速度分配
       float velocity[4];
-      velocity[0] = -z - y + x;
-      velocity[1] = -z + y + x;
-      velocity[2] = -z + y - x;
-      velocity[3] = -z - y - x;
+      velocity[0] = -Z - Y + X;
+      velocity[1] = -Z + Y + X;
+      velocity[2] = -Z + Y - X;
+      velocity[3] = -Z - Y - X;
 
       //电流pid计算
       current[0] = Chas3508_PID(0,velocity[0], Chas3508_Velocity[0]);

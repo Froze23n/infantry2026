@@ -33,6 +33,7 @@
 #include "vt.h"
 #include "referee.h"
 #include "motors.h"
+#include "usb.h"
 
 /* USER CODE END Includes */
 
@@ -133,8 +134,8 @@ int main(void)
   Enable_Motors();
   while (1)
   {
-    Referee_UI_Update();
-    HAL_Delay(50);
+    Referee_UI_Update(); HAL_Delay(50); //绘制UI界面 20Hz
+    USB_TX();
     HAL_GPIO_TogglePin(Green_GPIO_Port,Green_Pin); //绿灯常闪
     /* USER CODE END WHILE */
 
