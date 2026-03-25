@@ -17,11 +17,21 @@
 
 /* ------------------------------ 常量 ------------------------------ */
 //can2 头
-const uint32_t HEAD_CMD_ID = 0x1ff; //GM6020(id=1) m3508(id=2,3) m2006(id=4)
+static const uint32_t HEAD_CMD_ID = 0x1ff; //GM6020(id=1) m3508(id=2,3) m2006(id=4)
+static const uint32_t Pitch_FB_ID = 0x205;
+static const uint32_t Shoot_FB_ID[2] = {0x206, 0x207};
+static const uint32_t Load_FB_ID = 0x208;
+
 
 //can1 身
-const uint32_t NECK_CMD_ID = 0x2ff; //Yaw GM6020(id=5) #返回0x209
-const uint32_t BODY_CMD_ID = 0x200; //4个m3508(1~4) #返回0x201-204
+static const uint32_t NECK_CMD_ID = 0x2ff; //Yaw GM6020(id=5) #返回0x209
+static const uint32_t NECK_FB_ID = 0x209;
+
+static const uint32_t BODY_CMD_ID = 0x200; //4个m3508(1~4) #返回0x201-204
+static const uint32_t BODY_FB_ID[4] = {0x201,0x202,0x203,0x204};
+
+static const uint32_t CAP_CMD_ID = 0x391;
+static const uint32_t CAP_FB_ID = 0x385;
 
 //进制转化
 #define _pi_over_4096_ (PI/4096.0f)
@@ -29,7 +39,7 @@ const uint32_t BODY_CMD_ID = 0x200; //4个m3508(1~4) #返回0x201-204
 
 /* ------------------------------ 全局变量 ------------------------------ */
 //can1数据：pitch电机&拨弹盘
-float Pitch6020_Angle=1400 * _pi_over_4096_;
+float Pitch6020_Angle = 1350 * _pi_over_4096_;
 const float pitch_lookup_lim = 700 * _pi_over_4096_; //仰角
 const float pitch_lookdown_lim = 2000 * _pi_over_4096_; //俯角
 float Load2006_Velocity=0;
@@ -37,7 +47,7 @@ float Shoot3508_Velocity[2] = {0,0};
 //can2数据：yaw电机&麦轮
 float Chas3508_Velocity[4] = {0,0,0,0};
 float Chas3508_Current[4] = {0,0,0,0};
-float Yaw6020_Angle = 0.0f;//(-pi,pi]
+float Yaw6020_Angle = 0.0f; //(-pi,pi]
 
 /* ------------------------------ 函数 ------------------------------ */
 static void CAN1_Rx_Handler(CAN_RxHeaderTypeDef RxHeader, const uint8_t RxData[8]);
@@ -132,6 +142,25 @@ void Neck_GM6020_Tx(int16_t Yaw_Voltage)
 }
 
 /*
+用于给超级电容控制板发送缓冲能量数据
+*/
+void Capacitor_Tx(uint8_t chassis_power_limit, uint8_t buffer_energy){
+	uint8_t TxData[2];
+	TxData[0] = chassis_power_limit;
+	TxData[1] = buffer_energy;
+	CAN_TxHeaderTypeDef TxHeader = {
+		.DLC = 2,
+		.IDE = CAN_ID_STD,    // 标准帧
+		.RTR = CAN_RTR_DATA,  // 数据帧
+		.StdId = CAP_CMD_ID //0x391
+	};
+	uint32_t TxBox = CAN_TX_MAILBOX2;
+	if (HAL_CAN_AddTxMessage(&hcan1, &TxHeader, TxData, &TxBox) != HAL_OK){
+		HAL_GPIO_WritePin(Red_GPIO_Port,Red_Pin,GPIO_PIN_SET);//警告
+	}
+}
+
+/*
  * 此函数用于一次性控制滑环之上的四个电机
  * 包括云台Pitch轴（GM6020）
  * 供弹装置的拨弹盘（M2006）
@@ -154,7 +183,7 @@ void Head_Motors_Tx(int16_t Pitch_Voltage, int16_t Shooter_Current[2], int16_t L
 		.RTR = CAN_RTR_DATA,  // 数据帧
 		.StdId = HEAD_CMD_ID
 	};
-	uint32_t TxBox = CAN_TX_MAILBOX2;
+	uint32_t TxBox = CAN_TX_MAILBOX0;
 	if (HAL_CAN_AddTxMessage(&hcan2, &TxHeader, TxData, &TxBox) != HAL_OK){
 		HAL_GPIO_WritePin(Red_GPIO_Port,Red_Pin,GPIO_PIN_SET);//警告
 	}
@@ -165,18 +194,21 @@ void Head_Motors_Tx(int16_t Pitch_Voltage, int16_t Shooter_Current[2], int16_t L
  * 处理CAN1总线上的报文数据
  */
 static void CAN1_Rx_Handler(CAN_RxHeaderTypeDef RxHeader, const uint8_t RxData[8]) {
-	if(RxHeader.StdId == 0x209) //GM6020(id=5) #返回0x209
+	if(RxHeader.StdId == NECK_FB_ID) //GM6020(id=5) #返回0x209
 	{
 		int16_t rawAngle = (int16_t)( (RxData[0]<<8) | RxData[1] );
 		rawAngle -= 6460; //magic number 取决于Yaw轴GM6020的安装角度
 		if(rawAngle<=-4096){rawAngle+=8192;}//-> (4095)~(0)~(-4096)
 		Yaw6020_Angle = (float)rawAngle * _pi_over_4096_; //-> [-pi,pi)
 	}
-	else if(RxHeader.StdId>0x200 && RxHeader.StdId<0x205) //4个m3508(1~4) #返回0x201-204
+	else if(RxHeader.StdId >= BODY_FB_ID[0] && RxHeader.StdId <= BODY_FB_ID[3]) //4个m3508(1~4) #返回0x201-204
 	{
-		uint32_t i = RxHeader.StdId-(uint32_t)0x201;
+		uint32_t i = RxHeader.StdId-BODY_FB_ID[0];
 		int16_t rawVelocity = (int16_t)( (RxData[2]<<8) | RxData[3] );
 		Chas3508_Velocity[i] = (float)rawVelocity * _rads_per_rpm_;
+	}
+	else if(RxHeader.StdId == CAP_FB_ID){
+		//Todo
 	}
 	else
 	{
@@ -188,22 +220,18 @@ static void CAN1_Rx_Handler(CAN_RxHeaderTypeDef RxHeader, const uint8_t RxData[8
  * 处理CAN2的数据
  */
 static void CAN2_Rx_Handler(CAN_RxHeaderTypeDef RxHeader, const uint8_t RxData[8]) {
-	if (RxHeader.StdId == 0x205)
+	if (RxHeader.StdId == Pitch_FB_ID)
 	{
 		int16_t rawAngle = (int16_t)( (RxData[0]<<8) | RxData[1] );
 		Pitch6020_Angle = (float)rawAngle * _pi_over_4096_;
 	}
-	else if (RxHeader.StdId == 0x206)
+	else if ((RxHeader.StdId == Shoot_FB_ID[0]) || (RxHeader.StdId == Shoot_FB_ID[1]))
 	{
+		uint32_t i = RxHeader.StdId - Shoot_FB_ID[0];
 		int16_t rawVelocity = (int16_t)( (RxData[2]<<8) | RxData[3] );
-		Shoot3508_Velocity[0] = (float)rawVelocity * _rads_per_rpm_;
+		Shoot3508_Velocity[i] = (float)rawVelocity * _rads_per_rpm_;
 	}
-	else if (RxHeader.StdId == 0x207)
-	{
-		int16_t rawVelocity = (int16_t)( (RxData[2]<<8) | RxData[3] );
-		Shoot3508_Velocity[1] = (float)rawVelocity * _rads_per_rpm_;
-	}
-	else if (RxHeader.StdId == 0x208)
+	else if (RxHeader.StdId == Load_FB_ID)
 	{
 		int16_t rawVelocity = (int16_t)( (RxData[2]<<8) | RxData[3] );
 		Load2006_Velocity = (float)rawVelocity * _rads_per_rpm_;

@@ -16,8 +16,11 @@ extern float Yaw6020_Angle;//经过特殊处理，为(-pi,pi]
 
 /*函数声名*/
 void Enable_Motors(void);
+
 void Head_Motors_Tx(int16_t Pitch_Voltage, int16_t Shooter_Current[2], int16_t Loader_Current);
+
 void Body_M3508_Tx(int16_t Current[4]);
 void Neck_GM6020_Tx(int16_t Yaw_Voltage);
+void Capacitor_Tx(uint8_t chassis_power_limit, uint8_t buffer_energy);
 
 #endif //MOTORS_H

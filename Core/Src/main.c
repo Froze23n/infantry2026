@@ -29,11 +29,11 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "imu.h"
 #include "vt.h"
+#include "imu.h"
 #include "referee.h"
 #include "motors.h"
-#include "usb.h"
+#include "game_task.h"
 
 /* USER CODE END Includes */
 
@@ -100,16 +100,17 @@ int main(void)
   MX_GPIO_Init();
   MX_DMA_Init();
   MX_IWDG_Init();
+  MX_USART1_UART_Init();
+  MX_USART6_UART_Init();
+  MX_SPI1_Init();
+  MX_CAN1_Init();
+  MX_CAN2_Init();
   MX_TIM4_Init();
   MX_TIM6_Init();
   MX_TIM7_Init();
   MX_TIM10_Init();
-  MX_SPI1_Init();
-  MX_CAN1_Init();
-  MX_CAN2_Init();
-  MX_USART6_UART_Init();
+  MX_TIM13_Init();
   MX_USB_DEVICE_Init();
-  MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
@@ -119,23 +120,27 @@ int main(void)
   //开启蜂鸣器
   HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_3);
   __HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_3, 500);
+  
   //初始化
-  VT_Init();
-  Referee_Init();
-  IMU_Init();
+  VT_Init(); //遥控器
+  IMU_Init(); //陀螺仪
+  Referee_Init(); //裁判系统
+  
   //关闭蜂鸣器
   __HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_3, 0);
+  
   //关闭RGB
   HAL_GPIO_WritePin(Red_GPIO_Port, Red_Pin, GPIO_PIN_RESET);
   HAL_GPIO_WritePin(Green_GPIO_Port, Green_Pin, GPIO_PIN_RESET);
   HAL_GPIO_WritePin(Blue_GPIO_Port, Blue_Pin, GPIO_PIN_RESET);
+  
   //等待看门狗生效
   HAL_Delay(1000);
-  Enable_Motors();
+  Enable_Motors(); //使能电机控制
+  Game_Start(); //使能游戏控制
   while (1)
   {
-    Referee_UI_Update(); HAL_Delay(50); //绘制UI界面 20Hz
-    USB_TX();
+    HAL_Delay(999);
     HAL_GPIO_TogglePin(Green_GPIO_Port,Green_Pin); //绿灯常闪
     /* USER CODE END WHILE */
 

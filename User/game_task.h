@@ -1,5 +1,5 @@
-#ifndef USB_H
-#define USB_H
+#ifndef GAME_TASK_H
+#define GAME_TASK_H
 
 #include "main.h"
 
@@ -41,7 +41,8 @@ typedef struct{
 
 #pragma pack(pop)
 
-
+void Game_Start(void);
+void Game_Task(void);
 void USB_TX(void);
 void USB_RX(void);
 

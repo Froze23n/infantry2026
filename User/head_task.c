@@ -1,4 +1,4 @@
-#include "head_task.h"
+#include "head_task.h" //分配TIM4 1000Hz
 #include "vt.h"
 #include "imu.h"
 #include "pid.h"

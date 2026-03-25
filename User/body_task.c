@@ -1,4 +1,4 @@
-#include "body_task.h"
+#include "body_task.h" //分配TIM7 125Hz
 #include "vt.h"
 #include "arm_math.h"
 #include "pid.h"
@@ -19,7 +19,7 @@ static float slopeX(int x){
    switch(x){
       case +1: ret += 0.032f; break;
       case -1: ret -= 0.032f; break;
-      case 0 : ret *= 0.985f; break;
+      case 0 : ret *= 0.9f; break;
    }
    if(ret > +1.0f){ ret = +1.0f;}
    if(ret < -1.0f){ ret = -1.0f;}
@@ -31,7 +31,7 @@ static float slopeY(int y){
    switch(y){
       case +1: ret += 0.032f; break;
       case -1: ret -= 0.032f; break;
-      case 0 : ret *= 0.900f; break;
+      case 0 : ret *= 0.9f; break;
    }
    if(ret > +1.0f){ ret = +1.0f;}
    if(ret < -1.0f){ ret = -1.0f;}
@@ -67,16 +67,16 @@ void Body_Task(void)
       }
 
       if (vt.CNS == MODE_N) {
-         z = 0.0f; //Chas_Calc_Z(Yaw6020_Angle);
+         z = Chas_Calc_Z(Yaw6020_Angle);
       }else if(vt.CNS == MODE_S) {
          //右侧拨杆控制小陀螺模式的底盘速度 注意z的初始值为0
-         if(vt.keyboard.bit.E){
-            z = -2.0f;
-         }
-         if(vt.keyboard.bit.Q){
+         if(vt.keyboard.bit.Q || vt.FN_L){
             z = +2.0f;
          }
-         if(vt.keyboard.bit.R){
+         if(vt.keyboard.bit.E || vt.FN_R){
+            z = -2.0f;
+         }
+         if(vt.keyboard.bit.R || vt.pause){
             z = 0.0f;
          }
       }

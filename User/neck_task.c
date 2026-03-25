@@ -1,4 +1,4 @@
-#include "neck_task.h"
+#include "neck_task.h" //分配TIM6 1000Hz
 #include "vt.h"
 #include "imu.h"
 #include "pid.h"
