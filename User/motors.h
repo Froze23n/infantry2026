@@ -6,13 +6,14 @@
 /*-----------------------extern-----------------------*/
 //can2数据：pitch电机&拨弹盘
 extern float Pitch6020_Angle;
-extern const float pitch_lookup_lim;
-extern const float pitch_lookdown_lim;
+extern const float Pitch_Lookup_Limit;
+extern const float Pitch_Lookdown_Limit;
 extern float Load2006_Velocity;//rad/s
 extern float Shoot3508_Velocity[2];
 //can1数据：yaw电机&麦轮
 extern float Chas3508_Velocity[4];
 extern float Yaw6020_Angle;//经过特殊处理，为(-pi,pi]
+extern float Capacitor_Energy;
 
 /*函数声名*/
 void Enable_Motors(void);

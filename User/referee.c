@@ -1,5 +1,6 @@
 #include "referee.h"
 #include "usart.h"
+#include "motors.h"
 #include <string.h>
 #include <stdlib.h>
 
@@ -13,13 +14,6 @@
 /* ------------------------------ 变量 ------------------------------ */
 Referee_Type referee;
 static uint8_t REFE_RxBuf[2][REFE_RX_BUF_SIZE];
-
-struct
-{
-    unsigned a,b,c,d,e,f;
-} referee_error;
-unsigned refe_pack=0;
-
 
 static uint8_t Get_CRC8_Check_Sum(uint8_t *pchMessage,uint32_t dwLength);
 static uint16_t Get_CRC16_Check_Sum(uint8_t *pchMessage,uint32_t dwLength);
@@ -74,32 +68,28 @@ void Referee_IRQHandler(void)
 
 static void Refe_Data_Process(uint8_t* buffer, int32_t total_length)
 {
-    if(total_length > REFE_RX_BUF_SIZE){referee_error.f++;} //数据长度过大
+    if(total_length > REFE_RX_BUF_SIZE){} //数据长度过大
     
     while(total_length!=0)
     {
-        refe_pack++;
-        if(total_length<0){referee_error.a++; return;} //最后一个数据包残缺
+        if(total_length<0){ return;} //最后一个数据包残缺
 
-        if(SOF!=buffer[0]){referee_error.b++; return;} //起始字节错误
+        if(SOF!=buffer[0]){ return;} //起始字节错误
         
         uint16_t data_length = buffer[1] | buffer[2]<<8; //数据段长度
         
         static uint8_t seq = 0xff;
-        if(buffer[3] != seq + 1){
-            referee_error.c++;
-        } //包序列错误
+        if(buffer[3] != seq + 1){} //包序列错误
         seq = buffer[3]; //更新包序列
         
         uint8_t CRC8 = buffer[4]; //帧头CRC8校验
-        if(CRC8!=Get_CRC8_Check_Sum(buffer,4)){referee_error.d++; return;} //CRC8校验错误
+        if(CRC8!=Get_CRC8_Check_Sum(buffer,4)){ return;} //CRC8校验错误
 
         uint16_t cmd_id = buffer[5] | buffer[6]<<8;
         uint8_t *data = buffer + 7; //5(帧头)+2(cmd_id)
         uint16_t CRC16 = data[data_length] | (data[data_length+1]<<8); //数据段后2字节为CRC16校验
 
         if(CRC16 != Get_CRC16_Check_Sum(buffer, data_length + 7)){
-            referee_error.e++;
             buffer += (data_length + 9);
             total_length -= (data_length + 9);
             continue; //CRC16校验错误，丢弃该数据包继续处理下一个数据包
@@ -133,12 +123,12 @@ static void Refe_Data_Process(uint8_t* buffer, int32_t total_length)
 }
 
 static uint8_t txbuf[128] = {0};
-uint32_t CAP = 50;
+static uint32_t CAP = 0;
 uint32_t AIMX = 960;
 uint32_t AIMY = 540;
 void Referee_UI_Update(void){
     //图形信息更新
-    CAP = (CAP >= 540) ? (0) : (CAP+10);
+    CAP = (uint32_t)(Capacitor_Energy * 540.0f);
     AIMX = 860 + rand()%200;
     AIMY = 440 + rand()%200;
 

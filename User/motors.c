@@ -40,14 +40,14 @@ static const uint32_t CAP_FB_ID = 0x385;
 /* ------------------------------ 全局变量 ------------------------------ */
 //can1数据：pitch电机&拨弹盘
 float Pitch6020_Angle = 1350 * _pi_over_4096_;
-const float pitch_lookup_lim = 700 * _pi_over_4096_; //仰角
-const float pitch_lookdown_lim = 2000 * _pi_over_4096_; //俯角
+const float Pitch_Lookup_Limit = 700 * _pi_over_4096_; //仰角
+const float Pitch_Lookdown_Limit = 2000 * _pi_over_4096_; //俯角
 float Load2006_Velocity=0;
 float Shoot3508_Velocity[2] = {0,0};
 //can2数据：yaw电机&麦轮
 float Chas3508_Velocity[4] = {0,0,0,0};
-float Chas3508_Current[4] = {0,0,0,0};
 float Yaw6020_Angle = 0.0f; //(-pi,pi]
+float Capacitor_Energy = 0;
 
 /* ------------------------------ 函数 ------------------------------ */
 static void CAN1_Rx_Handler(CAN_RxHeaderTypeDef RxHeader, const uint8_t RxData[8]);
@@ -208,7 +208,8 @@ static void CAN1_Rx_Handler(CAN_RxHeaderTypeDef RxHeader, const uint8_t RxData[8
 		Chas3508_Velocity[i] = (float)rawVelocity * _rads_per_rpm_;
 	}
 	else if(RxHeader.StdId == CAP_FB_ID){
-		//Todo
+		uint16_t rawEnergy = (uint16_t)( RxData[2]<<8 | RxData[3] );
+		Capacitor_Energy = (float)rawEnergy / 600.0f;
 	}
 	else
 	{

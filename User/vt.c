@@ -16,13 +16,6 @@
 VT_Host_Type vt;
 static uint8_t VT_RxBuf[2][VT_RX_BUF_SIZE];  // 接收到的原始数据
 
-struct
-{
-    unsigned a,b,c,d,e,f;
-} vt_error;
-unsigned vt_pack=0;
-
-
 static void VT_Data_Process(uint8_t* buffer, int32_t length);
 static uint16_t get_crc16_check_sum(uint8_t *p_msg, uint16_t len);
 
@@ -77,12 +70,11 @@ void VT_IRQHandler(void)
 }
 
 static void VT_Data_Process(uint8_t* buffer, int32_t length){
-	if(length > VT_RX_BUF_SIZE){vt_error.f++;} //数据长度过大
+	if(length > VT_RX_BUF_SIZE){} //数据长度过大
     
     while(length!=0)
     {
-        vt_pack++;
-        if(length<0){vt_error.a++; return;} //最后一个数据包残缺
+        if(length<0){ return;} //最后一个数据包残缺
 
 		if(buffer[0] == 0xA9 && buffer[1] == 0x53){
 			uint16_t crc16 = get_crc16_check_sum(buffer, VT_RC_LEN - 2);
@@ -112,14 +104,14 @@ static void VT_Data_Process(uint8_t* buffer, int32_t length){
 
                 vt.keyboard.raw = vt_wire->keyboard.raw;
 			}else{
-				vt_error.b++; //CRC16校验失败
+				//CRC16校验失败
 			}
+            
 			buffer += VT_RC_LEN; //移动到下一个数据包
 			length -= VT_RC_LEN; //更新剩余长度
 		}else if(buffer[0] == 0xA5){
-			//裁判系统图传链路数据
+			//裁判系统图传链路数据 通常为自定义控制器 这里不做处理
             uint16_t data_length = buffer[1] | buffer[2]<<8; //数据段长度
-            //步兵不需要自定义控制器数据，直接丢弃
             buffer += (data_length + 9);
             length -= (data_length + 9);
 		}else{
