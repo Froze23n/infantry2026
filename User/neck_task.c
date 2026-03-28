@@ -4,6 +4,8 @@
 #include "pid.h"
 #include "motors.h"
 
+#include "game_task.h"
+
 //遥控数据
 const float rc_x_sensitivity = PI/500.0f;
 
@@ -22,6 +24,21 @@ void Neck_Task(void)
         if (angle_diff > -PI/2 && angle_diff < PI/2) { RC_YAW -= rc_x_sensitivity * (vt.RX + vt.mouse_x); } //注意方向
         if (angle_diff > +PI) { RC_YAW -= 2*PI; }
         if (angle_diff < -PI) { RC_YAW += 2*PI; }
+        
+        if (vt.trigger){
+            float direction = (Vision_Yaw_Angle > 0.0f) ? (1.0f) : (-1.0f);
+            if(Vision_Yaw_Angle < -8.0f || Vision_Yaw_Angle > 8.0f){
+                RC_YAW += direction * rc_x_sensitivity * 0.16f;
+            }else if(Vision_Yaw_Angle < -4.0f || Vision_Yaw_Angle > 4.0f){
+                RC_YAW += direction * rc_x_sensitivity * 0.08f;
+            }else if(Vision_Yaw_Angle < -2.0f || Vision_Yaw_Angle > 2.0f){
+                RC_YAW += direction * rc_x_sensitivity * 0.04f;
+            }else if(Vision_Yaw_Angle < -1.0f || Vision_Yaw_Angle > 1.0f){
+                RC_YAW += direction * rc_x_sensitivity * 0.02f;
+            }else{
+
+            }
+        }
 
         voltage = Yaw6020_PID(RC_YAW, imu.Yaw_Angle, imu.Yaw_Velocity, 0);
     }

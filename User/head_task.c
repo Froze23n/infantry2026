@@ -4,6 +4,8 @@
 #include "pid.h"
 #include "motors.h"
 
+#include "game_task.h"
+
 const float rc_y_sensitivity = 1/200.0f;
 const float loader_speed_level = 250.0f;
 
@@ -30,6 +32,23 @@ void Head_Task(void)
         }else {
             RC_PITCH += rc_y_sensitivity * rcY;
         }
+
+        if (vt.trigger){
+            float direction = (Vision_Pitch_Angle > 0.0f) ? (1.0f) : (-1.0f);
+
+            if(Vision_Pitch_Angle < -2.0f || Vision_Pitch_Angle > 2.0f){
+                RC_PITCH += direction * rc_y_sensitivity * 0.08f;
+            }else if(Vision_Pitch_Angle < -1.0f || Vision_Pitch_Angle > 1.0f){
+                RC_PITCH += direction * rc_y_sensitivity * 0.04f;
+            }else if(Vision_Pitch_Angle < -0.5f || Vision_Pitch_Angle > 0.5f){
+                RC_PITCH += direction * rc_y_sensitivity * 0.02f;
+            }else if(Vision_Pitch_Angle < -0.25f || Vision_Pitch_Angle > 0.25f){
+                RC_PITCH += direction * rc_y_sensitivity * 0.01f;
+            }else{
+                
+            }
+        }
+
         pitch_voltage = Pitch6020_PID(RC_PITCH, imu.Pitch_Angle, imu.Pitch_Velocity, 0);
 
         extern float Load2006_iError;
