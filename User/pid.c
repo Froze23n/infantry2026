@@ -134,12 +134,20 @@ float pitch6020_velocity_to_voltage(float expV, float truV)
 /*
  * 拨弹盘速度控制
  */
-float Load2006_iError = 0;
+char Load2006_Blocked = 0; //堵转标志位
 int16_t Load2006_PID(float pError)
 {
+    static float Load2006_iError = 0;
     Load2006_iError += pError;
-    if(Load2006_iError > +LOADER_IERROR_LIMIT){ Load2006_iError = +LOADER_IERROR_LIMIT; } //神秘堵转反转处理
+    #define LOADER_IERROR_LIMIT (50000.0f) //堵转反转处理适合较大积分上限
+    if(Load2006_iError > +LOADER_IERROR_LIMIT){ Load2006_iError = +LOADER_IERROR_LIMIT; }
     if(Load2006_iError < -LOADER_IERROR_LIMIT){ Load2006_iError = -LOADER_IERROR_LIMIT; }
+
+    if (Load2006_iError > LOADER_IERROR_LIMIT - 1.0f){
+        Load2006_Blocked = 1; //神秘堵转反转处理
+    }else{
+        Load2006_Blocked = 0;
+    }
 
     float output = pError*loadV.kp + Load2006_iError*loadV.ki;
     if(output > +10000){ output = +10000; } /* -10000mA  电流  +10000mA*/
@@ -153,13 +161,13 @@ int16_t Load2006_PID(float pError)
 int16_t Shoot3508_PID(int8_t ID, float pError)
 {
     if((ID!=0) && (ID!=1)){return 0;}
-    static float iError[2] = {0,0};
-    iError[ID] += pError;
+    static float Shoot3508_iError[2] = {0,0};
+    Shoot3508_iError[ID] += pError;
     #define SHOOTER_IERROR_LIMIT (300.0f)
-    if(iError[ID] > +SHOOTER_IERROR_LIMIT){ iError[ID] = +SHOOTER_IERROR_LIMIT; }
-    if(iError[ID] < -SHOOTER_IERROR_LIMIT){ iError[ID] = -SHOOTER_IERROR_LIMIT; }
+    if(Shoot3508_iError[ID] > +SHOOTER_IERROR_LIMIT){ Shoot3508_iError[ID] = +SHOOTER_IERROR_LIMIT; }
+    if(Shoot3508_iError[ID] < -SHOOTER_IERROR_LIMIT){ Shoot3508_iError[ID] = -SHOOTER_IERROR_LIMIT; }
 
-    float output = pError*shootV.kp + iError[ID]*shootV.ki;
+    float output = pError*shootV.kp + Shoot3508_iError[ID]*shootV.ki;
     if(output > +16384){ output = +16384; }
     if(output < -16384){ output = -16384; } /* -20000mV  电流  +20000mV*/
     return (int16_t)output;

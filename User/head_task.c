@@ -3,11 +3,11 @@
 #include "imu.h"
 #include "pid.h"
 #include "motors.h"
-
+#include "referee.h"
 #include "game_task.h"
 
 const float rc_y_sensitivity = 1/200.0f;
-const float loader_speed_level = 250.0f;
+float loader_speed_level = 250.0f;
 
 /*
  * 以1000Hz频率执行此函数
@@ -15,72 +15,80 @@ const float loader_speed_level = 250.0f;
  */
 void Head_Task(void)
 {
-    static float RC_PITCH = 0; //Pitch轴设定角度
-    static int SHOOT_ON = 0; //是否开启摩擦轮
+    /* 变量 */
+    static float RC_Pitch = 0; //Pitch轴设定角度
+    static char Shoot_On = 0; //是否开启摩擦轮
     static float RC_LoadV = 0; //拨弹盘速度
 
     int16_t pitch_voltage=0; //Pitch轴控制电压
     int16_t shooter_current[2]={0,0}; //摩擦轮控制电流
     static int16_t loader_current=0; //拨弹盘控制电流
 
-    float rcY = (vt.RY + vt.mouse_y);
     if (vt.CNS != MODE_C) {
+        /* Pitch */
+        float rcY = (vt.RY + vt.mouse_y);
         if ( (Pitch6020_Angle >= Pitch_Lookdown_Limit) && (rcY >= 0.0f) ) { //俯角超出限制 (下俯为电机正方向)
-            RC_PITCH = imu.Pitch_Angle;
+            RC_Pitch = imu.Pitch_Angle;
         }else if ( (Pitch6020_Angle <= Pitch_Lookup_Limit) && (rcY <= 0.0f) ){ //仰角超出限制 (上仰为电机负方向)
-            RC_PITCH = imu.Pitch_Angle;
+            RC_Pitch = imu.Pitch_Angle;
         }else {
-            RC_PITCH += rc_y_sensitivity * rcY;
+            RC_Pitch += rc_y_sensitivity * rcY;
         }
-
-        if (vt.trigger){
+        /* 自瞄处理 */
+        if (vt.trigger || vt.mouse_right){
             float direction = (Vision_Pitch_Angle > 0.0f) ? (1.0f) : (-1.0f);
 
             if(Vision_Pitch_Angle < -2.0f || Vision_Pitch_Angle > 2.0f){
-                RC_PITCH += direction * rc_y_sensitivity * 0.08f;
+                RC_Pitch += direction * rc_y_sensitivity * 0.08f;
             }else if(Vision_Pitch_Angle < -1.0f || Vision_Pitch_Angle > 1.0f){
-                RC_PITCH += direction * rc_y_sensitivity * 0.04f;
+                RC_Pitch += direction * rc_y_sensitivity * 0.04f;
             }else if(Vision_Pitch_Angle < -0.5f || Vision_Pitch_Angle > 0.5f){
-                RC_PITCH += direction * rc_y_sensitivity * 0.02f;
+                RC_Pitch += direction * rc_y_sensitivity * 0.02f;
             }else if(Vision_Pitch_Angle < -0.25f || Vision_Pitch_Angle > 0.25f){
-                RC_PITCH += direction * rc_y_sensitivity * 0.01f;
+                RC_Pitch += direction * rc_y_sensitivity * 0.01f;
             }else{
-                
+                //死区
             }
         }
 
-        pitch_voltage = Pitch6020_PID(RC_PITCH, imu.Pitch_Angle, imu.Pitch_Velocity, 0);
-
-        extern float Load2006_iError;
-        static int REVERSE_COUNTER = 0;
-
-        if (Load2006_iError > LOADER_IERROR_LIMIT - 1.0f) { REVERSE_COUNTER = 300; } //反转300ms
+        /* 摩擦轮机制 */
+        if (vt.keyboard.bit.R || vt.pause){
+            Shoot_On = 0; //按R键或暂停键停止摩擦轮
+        }
+        else if (vt.wheel >= 0.1f || vt.mouse_left){
+            Shoot_On = 1; //拨轮死区为±0.1
+        }
 
         if (vt.wheel >= 0.3f || vt.mouse_left) {
-            SHOOT_ON = 1;
             RC_LoadV = (vt.wheel + vt.mouse_left) * loader_speed_level;
         }else if (vt.wheel <= -0.3f) {
             RC_LoadV = -50.0f;
         }else {
             RC_LoadV = 0;
         }
-
-        //反转处理
-        if (REVERSE_COUNTER > 0) {
-            REVERSE_COUNTER --;
-            RC_LoadV = -100.0f;
+        /*防止超热量*/
+        if(referee.power_heat_data.shooter_17mm_1_barrel_heat > referee.robot_status.shooter_barrel_heat_limit){
+            loader_speed_level = 0.0f;
+        }else{
+            loader_speed_level = 250.0f;
         }
 
-        //停止摩擦轮
-        if (1==SHOOT_ON && (vt.wheel <= -1 || vt.keyboard.bit.R)){SHOOT_ON = 0;}
+        /*堵转处理*/
+        static int Load_Reserve_Count = 0;
+        if(Load2006_Blocked) { Load_Reserve_Count = 300; } //反转300ms
+        if (Load_Reserve_Count > 0) {
+            Load_Reserve_Count --;
+            RC_LoadV = -100.0f; //反转处理
+        }
 
-        shooter_current[0]=Shoot3508_PID(0, -700.0f*(float)SHOOT_ON - Shoot3508_Velocity[0]);
-        shooter_current[1]=Shoot3508_PID(1, +700.0f*(float)SHOOT_ON - Shoot3508_Velocity[1]);
-
+        /* PID 计算 */
+        pitch_voltage = Pitch6020_PID(RC_Pitch, imu.Pitch_Angle, imu.Pitch_Velocity, 0);
+        shooter_current[0]=Shoot3508_PID(0, -720.0f*(float)Shoot_On - Shoot3508_Velocity[0]);
+        shooter_current[1]=Shoot3508_PID(1, +720.0f*(float)Shoot_On - Shoot3508_Velocity[1]);
         loader_current = Load2006_PID(RC_LoadV - Load2006_Velocity);
     }else {
-        RC_PITCH = imu.Pitch_Angle; //防止猛抬头
-        SHOOT_ON = 0; //关闭摩擦轮
+        RC_Pitch = imu.Pitch_Angle; //防止猛抬头
+        Shoot_On = 0; //关闭摩擦轮
         pitch_voltage = 0;
         shooter_current[0] = -0;
         shooter_current[1] = +0;

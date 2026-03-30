@@ -46,19 +46,17 @@ void USB_Tx(void){
 //视觉自瞄数据接收
 float Vision_Pitch_Angle = 0.0f; //角度
 float Vision_Yaw_Angle = 0.0f; //角度
-uint8_t Vision_Buffer[16];
+int16_t Vision_Shoot;
 
-static int rxt = 0;
-static int pass8 = 0;
-static int pass16 = 0;
+int rxt = 0;
+int pass8 = 0;
+int pass16 = 0;
 void USB_RxHandler(uint8_t* Buf, uint32_t *Len){
     int8_t length = (int8_t)(*Len);
+    rxt++;
     if(length != 34){
         return;
     }
-
-    rxt++;
-
     if(Buf[0] != 0x55){return;}
     
     uint8_t crc8 = Buf[4];
@@ -79,25 +77,7 @@ void USB_RxHandler(uint8_t* Buf, uint32_t *Len){
 
     Vision_Pitch_Angle = (*(float *)(&Buf[8]));
     Vision_Yaw_Angle = -1.0f * (*(float *)(&Buf[12])); //取反
-    Vision_Buffer[0] = Buf[16];
-    Vision_Buffer[1] = Buf[17];
-    Vision_Buffer[2] = Buf[18];
-    Vision_Buffer[3] = Buf[19];
-
-    Vision_Buffer[4] = Buf[20];
-    Vision_Buffer[5] = Buf[21];
-    Vision_Buffer[6] = Buf[22];
-    Vision_Buffer[7] = Buf[23];
-
-    Vision_Buffer[8] = Buf[24];
-    Vision_Buffer[9] = Buf[25];
-    Vision_Buffer[10] = Buf[26];
-    Vision_Buffer[11] = Buf[27];
-
-    Vision_Buffer[12] = Buf[28];
-    Vision_Buffer[13] = Buf[29];
-    Vision_Buffer[14] = Buf[30];
-    Vision_Buffer[15] = Buf[31];
+    Vision_Shoot = (Buf[20]) | (Buf[21] << 8);
 }
 
 /*--------------------------------------------------CRC8--------------------------------------------------*/
