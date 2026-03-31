@@ -5,6 +5,9 @@
 #include "motors.h"
 #include "usbd_cdc_if.h"
 #include "tim.h"
+#include "arm_math.h"
+
+Vision_Host_Type vision;
 
 static uint8_t Get_CRC8_Check_Sum(uint8_t *pchMessage, uint32_t dwLength);
 static uint16_t Get_CRC16_Check_Sum(uint8_t *pchMessage,uint32_t dwLength);
@@ -22,7 +25,15 @@ void Game_Task(void){
         Referee_UI_Update();
         Capacitor_Tx(referee.robot_status.chassis_power_limit, referee.power_heat_data.buffer_energy);
     }
-    USB_Tx();
+    
+    USB_Tx(); //给视觉发消息
+
+    if(HAL_GetTick() - vision.Tick > 500){
+        //视觉数据超过0.5s未更新，重置
+        vision.Yaw_Angle = 0.0f;
+        vision.Pitch_Angle = 0.0f;
+        vision.Can_Shoot = 0;
+    }
 }
 
 uint8_t USB_TxBuf[64];
@@ -42,42 +53,35 @@ void USB_Tx(void){
     CDC_Transmit_FS(buf, 13);
 }
 
-
-//视觉自瞄数据接收
-float Vision_Pitch_Angle = 0.0f; //角度
-float Vision_Yaw_Angle = 0.0f; //角度
-int16_t Vision_Shoot;
-
-int rxt = 0;
-int pass8 = 0;
-int pass16 = 0;
 void USB_RxHandler(uint8_t* Buf, uint32_t *Len){
     int8_t length = (int8_t)(*Len);
-    rxt++;
     if(length != 34){
         return;
     }
-    if(Buf[0] != 0x55){return;}
-    
-    uint8_t crc8 = Buf[4];
-    
-    if(crc8 != Get_CRC8_Check_Sum(Buf, 4)){
+
+    Vision_Wire_Type *vision_wire = (Vision_Wire_Type *)Buf;
+    if(vision_wire->Ox55 != 0x55 || vision_wire->OxAA != 0xAA){
         return;
     }
     
-    pass8 ++;
-
-    uint16_t crc16 = (Buf[32]) | (Buf[33] << 8);
-    
-    if(crc16 != Get_CRC16_Check_Sum(Buf, 32)){
+    if(vision_wire -> CRC8 != Get_CRC8_Check_Sum(Buf, 4)){
         return;
     }
+    
+    if(vision_wire -> CRC16 != Get_CRC16_Check_Sum(Buf, 32)){
+        return;
+    }    
 
-    pass16 ++;
+    vision.Tick = HAL_GetTick();
+    vision.Yaw_Angle = -1.0f * vision_wire->Yaw_Angle; //取反
+    vision.Pitch_Angle = vision_wire->Pitch_Angle;
+    vision.Can_Shoot = vision_wire->Can_Shoot;
 
-    Vision_Pitch_Angle = (*(float *)(&Buf[8]));
-    Vision_Yaw_Angle = -1.0f * (*(float *)(&Buf[12])); //取反
-    Vision_Shoot = (Buf[20]) | (Buf[21] << 8);
+    float distance;
+    arm_sqrt_f32(vision_wire->enemy_x * vision_wire->enemy_x + vision_wire->enemy_y * vision_wire->enemy_y, &distance);
+    vision.DX = distance * (vision.Yaw_Angle * _pi_over_180_);
+    vision.DY = distance * (vision.Pitch_Angle * _pi_over_180_);
+    
 }
 
 /*--------------------------------------------------CRC8--------------------------------------------------*/

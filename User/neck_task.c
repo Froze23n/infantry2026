@@ -26,17 +26,19 @@ void Neck_Task(void)
         if (angle_diff < -PI) { RC_Yaw += 2*PI; }
         
         if (vt.trigger || vt.mouse_right){
-            float direction = (Vision_Yaw_Angle > 0.0f) ? (1.0f) : (-1.0f);
-            if(Vision_Yaw_Angle < -8.0f || Vision_Yaw_Angle > 8.0f){
+            float direction = (vision.Yaw_Angle > 0.0f) ? (1.0f) : (-1.0f);
+            if(vision.Yaw_Angle < -8.0f || vision.Yaw_Angle > 8.0f){
                 RC_Yaw += direction * rc_x_sensitivity * 0.16f;
-            }else if(Vision_Yaw_Angle < -4.0f || Vision_Yaw_Angle > 4.0f){
+            }else if(vision.Yaw_Angle < -4.0f || vision.Yaw_Angle > 4.0f){
                 RC_Yaw += direction * rc_x_sensitivity * 0.08f;
-            }else if(Vision_Yaw_Angle < -2.0f || Vision_Yaw_Angle > 2.0f){
+            }else if(vision.Yaw_Angle < -2.0f || vision.Yaw_Angle > 2.0f){
                 RC_Yaw += direction * rc_x_sensitivity * 0.04f;
-            }else if(Vision_Yaw_Angle < -1.0f || Vision_Yaw_Angle > 1.0f){
-                RC_Yaw += direction * rc_x_sensitivity * 0.02f;
+            }else if(vision.Yaw_Angle < -1.0f || vision.Yaw_Angle > 1.0f){
+                RC_Yaw += direction * rc_x_sensitivity * 0.01f;
             }else{
-                //死区
+                if(vision.DX > 5.0f || vision.DX < -5.0f){
+                    RC_Yaw += direction * rc_x_sensitivity * 0.025f;
+                }
             }
         }
 

@@ -36,18 +36,20 @@ void Head_Task(void)
         }
         /* 自瞄处理 */
         if (vt.trigger || vt.mouse_right){
-            float direction = (Vision_Pitch_Angle > 0.0f) ? (1.0f) : (-1.0f);
+            float direction = (vision.Pitch_Angle > 0.0f) ? (1.0f) : (-1.0f);
 
-            if(Vision_Pitch_Angle < -2.0f || Vision_Pitch_Angle > 2.0f){
-                RC_Pitch += direction * rc_y_sensitivity * 0.08f;
-            }else if(Vision_Pitch_Angle < -1.0f || Vision_Pitch_Angle > 1.0f){
-                RC_Pitch += direction * rc_y_sensitivity * 0.04f;
-            }else if(Vision_Pitch_Angle < -0.5f || Vision_Pitch_Angle > 0.5f){
-                RC_Pitch += direction * rc_y_sensitivity * 0.02f;
-            }else if(Vision_Pitch_Angle < -0.25f || Vision_Pitch_Angle > 0.25f){
-                RC_Pitch += direction * rc_y_sensitivity * 0.01f;
+            if(vision.Pitch_Angle < -2.0f || vision.Pitch_Angle > 2.0f){
+                RC_Pitch += direction * rc_y_sensitivity * 0.064f;
+            }else if(vision.Pitch_Angle < -1.0f || vision.Pitch_Angle > 1.0f){
+                RC_Pitch += direction * rc_y_sensitivity * 0.032f;
+            }else if(vision.Pitch_Angle < -0.5f || vision.Pitch_Angle > 0.5f){
+                RC_Pitch += direction * rc_y_sensitivity * 0.016f;
+            }else if(vision.Pitch_Angle < -0.25f || vision.Pitch_Angle > 0.25f){
+                RC_Pitch += direction * rc_y_sensitivity * 0.004f;
             }else{
-                //死区
+                if(vision.DY > 5.0f || vision.DY < -5.0f){
+                    RC_Pitch += direction * rc_y_sensitivity * 0.001f;
+                }
             }
         }
 
@@ -59,8 +61,13 @@ void Head_Task(void)
             Shoot_On = 1; //拨轮死区为±0.1
         }
 
+        /* 拨弹盘速度控制 */
         if (vt.wheel >= 0.3f || vt.mouse_left) {
-            RC_LoadV = (vt.wheel + vt.mouse_left) * loader_speed_level;
+            if(vt.trigger || vt.mouse_right){ //开启了自瞄
+                RC_LoadV = (vision.Can_Shoot) ? (loader_speed_level * 2.0f) : 0.0f; //允许射击则速度加倍
+            }else{
+                RC_LoadV = loader_speed_level; //操作手操作发射
+            }
         }else if (vt.wheel <= -0.3f) {
             RC_LoadV = -50.0f;
         }else {
@@ -83,8 +90,8 @@ void Head_Task(void)
 
         /* PID 计算 */
         pitch_voltage = Pitch6020_PID(RC_Pitch, imu.Pitch_Angle, imu.Pitch_Velocity, 0);
-        shooter_current[0]=Shoot3508_PID(0, -720.0f*(float)Shoot_On - Shoot3508_Velocity[0]);
-        shooter_current[1]=Shoot3508_PID(1, +720.0f*(float)Shoot_On - Shoot3508_Velocity[1]);
+        shooter_current[0]=Shoot3508_PID(0, -710.0f*(float)Shoot_On - Shoot3508_Velocity[0]);
+        shooter_current[1]=Shoot3508_PID(1, +710.0f*(float)Shoot_On - Shoot3508_Velocity[1]);
         loader_current = Load2006_PID(RC_LoadV - Load2006_Velocity);
     }else {
         RC_Pitch = imu.Pitch_Angle; //防止猛抬头
