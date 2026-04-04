@@ -36,6 +36,7 @@ typedef struct{
     float DX; //单位cm
     float DY; //单位cm
     int16_t Can_Shoot;
+    char OK;
 } Vision_Host_Type;
 
 void Game_Start(void);

@@ -80,6 +80,7 @@ static void VT_Data_Process(uint8_t* buffer, int32_t length){
 			uint16_t crc16 = get_crc16_check_sum(buffer, VT_RC_LEN - 2);
 			if(crc16 == (buffer[VT_RC_LEN - 2] | (buffer[VT_RC_LEN - 1] << 8))){ //CRC16校验
 	            HAL_IWDG_Refresh(&hiwdg); //成功接收到遥控器数据，喂狗防止程序重启
+                vt.Tick = HAL_GetTick();
 				
                 VT_Wire_Type *vt_wire = (VT_Wire_Type *)buffer;
                 

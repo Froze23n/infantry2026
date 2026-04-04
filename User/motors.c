@@ -30,8 +30,8 @@ static const uint32_t NECK_FB_ID = 0x209;
 static const uint32_t BODY_CMD_ID = 0x200; //4个m3508(1~4) #返回0x201-204
 static const uint32_t BODY_FB_ID[4] = {0x201,0x202,0x203,0x204};
 
-static const uint32_t CAP_CMD_ID = 0x391;
-static const uint32_t CAP_FB_ID = 0x385;
+static const uint32_t CAP_CMD_ID = 0x498;
+static const uint32_t CAP_FB_ID = 0x486;
 
 //进制转化
 #define _pi_over_4096_ (PI/4096.0f)
@@ -145,14 +145,15 @@ void Neck_GM6020_Tx(int16_t Yaw_Voltage)
 用于给超级电容控制板发送缓冲能量数据
 */
 void Capacitor_Tx(uint8_t chassis_power_limit, uint8_t buffer_energy){
-	uint8_t TxData[2];
+	uint8_t TxData[3];
 	TxData[0] = chassis_power_limit;
 	TxData[1] = buffer_energy;
+	TxData[2] = 0x01;
 	CAN_TxHeaderTypeDef TxHeader = {
-		.DLC = 2,
+		.DLC = 3,
 		.IDE = CAN_ID_STD,    // 标准帧
 		.RTR = CAN_RTR_DATA,  // 数据帧
-		.StdId = CAP_CMD_ID //0x391
+		.StdId = CAP_CMD_ID //
 	};
 	uint32_t TxBox = CAN_TX_MAILBOX2;
 	if (HAL_CAN_AddTxMessage(&hcan1, &TxHeader, TxData, &TxBox) != HAL_OK){
@@ -209,7 +210,7 @@ static void CAN1_Rx_Handler(CAN_RxHeaderTypeDef RxHeader, const uint8_t RxData[8
 	}
 	else if(RxHeader.StdId == CAP_FB_ID){
 		uint16_t rawEnergy = (uint16_t)( RxData[2]<<8 | RxData[3] );
-		Capacitor_Energy = (float)rawEnergy / 600.0f;
+		Capacitor_Energy = (float)rawEnergy / 29.78863f;
 	}
 	else
 	{

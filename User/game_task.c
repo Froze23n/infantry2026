@@ -33,42 +33,47 @@ void Game_Task(void){
         vision.Yaw_Angle = 0.0f;
         vision.Pitch_Angle = 0.0f;
         vision.Can_Shoot = 0;
+        vision.OK = 0;
     }
 }
 
 uint8_t USB_TxBuf[64];
 void USB_Tx(void){
-    // CDC_Transmit_FS((uint8_t *)content, sizeof(content));
     uint8_t * buf = USB_TxBuf;
     buf[0] = 0xAA;
-    buf[1] = (referee.robot_status.robot_id < 0x100) ? 2:1; //敌方 红1 蓝2
+
+    // buf[1] = (referee.robot_status.robot_id < 100) ? 2:1; //敌方 红1 蓝2
+    buf[1] = 2;
     *(float *)(&buf[2]) = imu.Yaw_Angle;
     *(float *)(&buf[6]) = imu.Pitch_Angle;
     buf[10] = 0;
 
     uint16_t crc16 = Get_CRC16_Check_Sum(buf, 11);
-    buf[11] = (uint8_t)(crc16);
-    buf[12] = (uint8_t)(crc16>>8);
-    // buf[13] = 0xA5;
+    *(uint16_t *)(&buf[11]) = crc16;
     CDC_Transmit_FS(buf, 13);
 }
 
+uint32_t USB_ERROR = 0;
 void USB_RxHandler(uint8_t* Buf, uint32_t *Len){
     int8_t length = (int8_t)(*Len);
     if(length != 34){
+        USB_ERROR++;
         return;
     }
 
     Vision_Wire_Type *vision_wire = (Vision_Wire_Type *)Buf;
     if(vision_wire->Ox55 != 0x55 || vision_wire->OxAA != 0xAA){
+        USB_ERROR++;
         return;
     }
     
     if(vision_wire -> CRC8 != Get_CRC8_Check_Sum(Buf, 4)){
+        USB_ERROR++;
         return;
     }
     
     if(vision_wire -> CRC16 != Get_CRC16_Check_Sum(Buf, 32)){
+        USB_ERROR++;
         return;
     }    
 
@@ -81,7 +86,7 @@ void USB_RxHandler(uint8_t* Buf, uint32_t *Len){
     arm_sqrt_f32(vision_wire->enemy_x * vision_wire->enemy_x + vision_wire->enemy_y * vision_wire->enemy_y, &distance);
     vision.DX = distance * (vision.Yaw_Angle * _pi_over_180_);
     vision.DY = distance * (vision.Pitch_Angle * _pi_over_180_);
-    
+    vision.OK = 1;
 }
 
 /*--------------------------------------------------CRC8--------------------------------------------------*/

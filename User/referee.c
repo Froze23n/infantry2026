@@ -1,8 +1,8 @@
 #include "referee.h"
 #include "usart.h"
 #include "motors.h"
+#include "game_task.h"
 #include <string.h>
-#include <stdlib.h>
 
 //裁判系统常规链路
 /* ------------------------------ 宏定义 变量 内部函数声明 ------------------------------ */
@@ -123,14 +123,14 @@ static void Refe_Data_Process(uint8_t* buffer, int32_t total_length)
 }
 
 static uint8_t txbuf[128] = {0};
-static uint32_t CAP = 0;
+static float CAP = 0;
 uint32_t AIMX = 960;
 uint32_t AIMY = 540;
 void Referee_UI_Update(void){
     //图形信息更新
-    CAP = (uint32_t)(Capacitor_Energy * 540.0f);
-    AIMX = 860 + rand()%200;
-    AIMY = 440 + rand()%200;
+    CAP = ((Capacitor_Energy-350.0f)/(2200.0f-350.0f) * 540.0f);
+    AIMX = 960 + vision.DX * 10.0f;
+    AIMY = 540 + vision.DY * 10.0f;
 
 
     txbuf[0] = SOF; //串口链路帧头
@@ -155,7 +155,9 @@ void Referee_UI_Update(void){
     txbuf[9] = (uint8_t)sender_id;
     txbuf[10] = (uint8_t)(sender_id >> 8);
 
-    uint16_t receiver_id = (sender_id < 0x0100) ? (sender_id + 0x0100) : (sender_id + 0x0064); //选手端ID
+    // uint16_t receiver_id = (sender_id < 100) ? (sender_id + 0x0100) : (sender_id + 0x0064); //选手端ID
+    // 傻呗大疆 机器人ID是十进制，选手端ID是十六进制
+    uint16_t receiver_id = (sender_id < 100) ? 0x103 : 0x167; //选手端ID，直接写死，避免计算错误
     txbuf[11] = (uint8_t)receiver_id;
     txbuf[12] = (uint8_t)(receiver_id >> 8);
 
@@ -171,15 +173,15 @@ void Referee_UI_Update(void){
     figure->width = 20; //线宽
     figure->start_x = 690; //起始位置x
     figure->start_y = 250; //起始位置y
-    figure->details_d = figure->start_x + CAP; //线段结束位置x
+    figure->details_d = (uint32_t)((float)figure->start_x + CAP); //线段结束位置x
     figure->details_e = figure->start_y; //线段结束位置y
 
     //绘制第二个图形
     figure = (interaction_figure_t *)&txbuf[28]; //13+15
-    figure->operate_type = (seq % 32) ? 2:1 ;
+    figure->operate_type = (vision.OK) ? 3 : ((seq % 32) ? 2:1);
     figure->figure_type = 1; //矩形 有框你不打？
     figure->layer = 1;
-    figure->color = 1; //黄色
+    figure->color = (vision.OK) ? 8:3; //白色:橙色
     figure->width = 5;
     figure->start_x = AIMX - 60;
     figure->start_y = AIMY - 40;

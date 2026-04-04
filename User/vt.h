@@ -73,6 +73,8 @@ typedef struct
 
 typedef struct
 {
+    uint32_t Tick;
+
     float LX;
     float LY;
     float RX;

@@ -43,19 +43,19 @@ void Head_Task(void)
             }else if(vision.Pitch_Angle < -1.0f || vision.Pitch_Angle > 1.0f){
                 RC_Pitch += direction * rc_y_sensitivity * 0.032f;
             }else if(vision.Pitch_Angle < -0.5f || vision.Pitch_Angle > 0.5f){
-                RC_Pitch += direction * rc_y_sensitivity * 0.016f;
+                RC_Pitch += direction * rc_y_sensitivity * 0.032f;
             }else if(vision.Pitch_Angle < -0.25f || vision.Pitch_Angle > 0.25f){
-                RC_Pitch += direction * rc_y_sensitivity * 0.004f;
+                RC_Pitch += direction * rc_y_sensitivity * 0.008f;
             }else{
                 if(vision.DY > 5.0f || vision.DY < -5.0f){
-                    RC_Pitch += direction * rc_y_sensitivity * 0.001f;
+                    RC_Pitch += direction * rc_y_sensitivity * 0.004f;
                 }
             }
         }
 
         /* 摩擦轮机制 */
-        if (vt.keyboard.bit.R || vt.pause){
-            Shoot_On = 0; //按R键或暂停键停止摩擦轮
+        if (vt.pause){
+            Shoot_On = 0; //按暂停键停止摩擦轮
         }
         else if (vt.wheel >= 0.1f || vt.mouse_left){
             Shoot_On = 1; //拨轮死区为±0.1
@@ -63,11 +63,11 @@ void Head_Task(void)
 
         /* 拨弹盘速度控制 */
         if (vt.wheel >= 0.3f || vt.mouse_left) {
-            if(vt.trigger || vt.mouse_right){ //开启了自瞄
-                RC_LoadV = (vision.Can_Shoot) ? (loader_speed_level * 2.0f) : 0.0f; //允许射击则速度加倍
-            }else{
+            // if(vt.trigger || vt.mouse_right){ //开启了自瞄
+            //     RC_LoadV = (vision.Can_Shoot) ? (loader_speed_level * 2.0f) : 0.0f; //允许射击则速度加倍
+            // }else{
                 RC_LoadV = loader_speed_level; //操作手操作发射
-            }
+            // }
         }else if (vt.wheel <= -0.3f) {
             RC_LoadV = -50.0f;
         }else {
