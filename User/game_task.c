@@ -42,8 +42,7 @@ void USB_Tx(void){
     uint8_t * buf = USB_TxBuf;
     buf[0] = 0xAA;
 
-    // buf[1] = (referee.robot_status.robot_id < 100) ? 2:1; //敌方 红1 蓝2
-    buf[1] = 2;
+    buf[1] = (referee.robot_status.robot_id < 100) ? 2:1; //敌方 红1 蓝2
     *(float *)(&buf[2]) = imu.Yaw_Angle;
     *(float *)(&buf[6]) = imu.Pitch_Angle;
     buf[10] = 0;
