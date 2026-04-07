@@ -68,7 +68,7 @@ void Head_Task(void)
             // }else{
                 RC_LoadV = loader_speed_level; //操作手操作发射
             // }
-        }else if (vt.wheel <= -0.3f) {
+        }else if (vt.wheel <= -0.3f || vt.mouse_middle || vt.keyboard.bit.X) {
             RC_LoadV = -50.0f;
         }else {
             RC_LoadV = 0;
@@ -82,7 +82,7 @@ void Head_Task(void)
 
         /*堵转处理*/
         static int Load_Reserve_Count = 0;
-        if(Load2006_Blocked) { Load_Reserve_Count = 300; } //反转300ms
+        if(Load2006_Blocked) { Load_Reserve_Count = 100; } //反转100ms
         if (Load_Reserve_Count > 0) {
             Load_Reserve_Count --;
             RC_LoadV = -100.0f; //反转处理

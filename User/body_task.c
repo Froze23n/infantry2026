@@ -15,7 +15,7 @@ const float M3508_Reduction_Ratio = 19.0f;
 float chassis_speed_level = M3508_Reduction_Ratio * 20.0f;
 float chassis_rotate_level = M3508_Reduction_Ratio * 10.0f;
 
-static const float iv = 0.032f;
+static const float iv = 0.024f;
 static const float mv = 0.900f;
 
 static float slopeX(int x){
@@ -75,10 +75,10 @@ void Body_Task(void)
       }else if(vt.CNS == MODE_S) {
          //右侧拨杆控制小陀螺模式的底盘速度 注意z的初始值为0
          if(vt.keyboard.bit.Q || vt.FN_L){
-            z += iv; if(z >= +4.0f){z= +4.0f;}
+            z += iv; if(z >= +2.0f){z= +2.0f;}
          }
          if(vt.keyboard.bit.E || vt.FN_R){
-            z -= iv; if(z <= -4.0f){z= -4.0f;}
+            z -= iv; if(z <= -2.0f){z= -2.0f;}
          }
          if(vt.keyboard.bit.R || vt.pause || (referee.robot_status.power_management_chassis_output == 0)){
             z *= mv;

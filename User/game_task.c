@@ -43,6 +43,7 @@ void USB_Tx(void){
     buf[0] = 0xAA;
 
     buf[1] = (referee.robot_status.robot_id < 100) ? 2:1; //敌方 红1 蓝2
+    // buf[1] = 2; //硬性编码防止出错
     *(float *)(&buf[2]) = imu.Yaw_Angle;
     *(float *)(&buf[6]) = imu.Pitch_Angle;
     buf[10] = 0;

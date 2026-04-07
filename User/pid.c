@@ -10,7 +10,7 @@ PID_T yawV = {6000.0f , 500.0f , '\0'}; //yaw轴速度
 PID_T pitchA = {80.0f , '\0' , 500.0f}; //pitch电机
 PID_T pitchV = {3000.0f , 500.0f , '\0'}; //pitch电机
 
-PID_T loadV = {20.0f , 0.01f , '\0'}; //拨弹盘
+PID_T loadV = {40.0f , 0.01f , '\0'}; //拨弹盘
 PID_T shootV = {45.0f, 0.2f, '\0'}; //摩擦轮
 
 

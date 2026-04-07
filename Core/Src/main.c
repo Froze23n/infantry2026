@@ -110,6 +110,7 @@ int main(void)
   MX_TIM7_Init();
   MX_TIM10_Init();
   MX_TIM13_Init();
+  MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
@@ -137,7 +138,7 @@ int main(void)
   HAL_Delay(1000);
   Enable_Motors(); //使能电机控制
   Game_Start(); //使能游戏控制
-  MX_USB_DEVICE_Init();// 开始orin nano通讯
+  // MX_USB_DEVICE_Init();// 开始orin nano通讯
   while (1)
   {
     HAL_Delay(999);
