@@ -96,9 +96,9 @@ static void VT_Data_Process(uint8_t* buffer, int32_t length){
                 vt.FN_R = vt_wire->rc.bit.fn_2;
                 vt.trigger = vt_wire->rc.bit.trigger;
                 
-                vt.mouse_x = (float)vt_wire->mouse.bit.mouse_x / 327.680f;
-                vt.mouse_y = -(float)vt_wire->mouse.bit.mouse_y / 327.680f;
-                vt.mouse_z = (float)vt_wire->mouse.bit.mouse_z / 327.680f;
+                vt.mouse_x = (float)vt_wire->mouse.bit.mouse_x / 327.680f; //实测下来比较合理的缩放
+                vt.mouse_y = -(float)vt_wire->mouse.bit.mouse_y / 327.680f; //如果发现不合适
+                vt.mouse_z = (float)vt_wire->mouse.bit.mouse_z / 327.680f; //操作手可以主动修改客户端灵敏度和鼠标DPI
                 vt.mouse_left = vt_wire->mouse.bit.mouse_left;
                 vt.mouse_right = vt_wire->mouse.bit.mouse_right;
                 vt.mouse_middle = vt_wire->mouse.bit.mouse_middle;
