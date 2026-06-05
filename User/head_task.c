@@ -68,7 +68,7 @@ void Head_Task(void)
             // }else{
                 RC_LoadV = loader_speed_level; //操作手操作发射
             // }
-        }else if (vt.wheel <= -0.3f || vt.mouse_middle || vt.keyboard.bit.X) {
+        }else if (vt.wheel <= -0.3f || vt.mouse_middle) {
             RC_LoadV = -50.0f;
         }else {
             RC_LoadV = 0;

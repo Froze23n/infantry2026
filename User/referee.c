@@ -129,8 +129,8 @@ uint32_t AIMY = 540;
 void Referee_UI_Update(void){
     //图形信息更新
     CAP = ((Capacitor_Energy-350.0f)/(2200.0f-350.0f) * 540.0f);
-    AIMX = 960 + vision.DX * 10.0f;
-    AIMY = 540 + vision.DY * 10.0f;
+    AIMX = 960 - vision.DX * 10.0f;
+    AIMY = 540 - vision.DY * 20.0f;
 
 
     txbuf[0] = SOF; //串口链路帧头
@@ -178,10 +178,10 @@ void Referee_UI_Update(void){
 
     //绘制第二个图形
     figure = (interaction_figure_t *)&txbuf[28]; //13+15
-    figure->operate_type = (vision.OK) ? 3 : ((seq % 32) ? 2:1);
+    figure->operate_type = (vision.OK) ? ((seq % 32) ? 2:1) : ((seq % 32) ? 3:1);
     figure->figure_type = 1; //矩形 有框你不打？
     figure->layer = 1;
-    figure->color = (vision.OK) ? 8:3; //白色:橙色
+    figure->color = (vision.OK) ? 3:8; //橙色:白色
     figure->width = 5;
     figure->start_x = AIMX - 60;
     figure->start_y = AIMY - 40;
